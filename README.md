@@ -7,14 +7,14 @@ Min Xiang
 Prashant Chhabra   
 
 # Main Components
-  Framework
-  Distributed Application
-  Consensus Protocol(s)
-  Communication Protocol
-  Analysis and tests
+- Framework   
+- Distributed Application  
+- Consensus Protocol(s)  
+- Communication Protocol  
+- Analysis and tests  
 
 # Milestones
-  M1: Framework for distributed application
-  M2: Implementation of distributed application
-  M3: Implementation of consensus protocol
-  M4: Analysis results 
+- M1: Framework for distributed application  
+- M2: Implementation of distributed application  
+- M3: Implementation of consensus protocol  
+- M4: Analysis results   
