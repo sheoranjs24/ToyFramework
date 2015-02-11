@@ -1,9 +1,9 @@
-def get_value(key):
+def get(key):
   pass
 
-def set_value(key, value):
+def put(key, value):
   pass
 
-def del_key(key):
+def delete(key):
   pass
 

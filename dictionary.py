@@ -1,5 +1,5 @@
 #This file acts as a key value datastore
-#this class's object should be synchronized
+#this class's object could be synchronized
 import json
 import os
 
@@ -16,20 +16,20 @@ class dictionary(object):
     @staticmethod
     def instantiation():
         if dictionary.flagForObjInstantiation == 0:
-                dictionary.classObj = dictionary()
-                flagForObjInstantiation = 1
-                return dictionary.classObj
+            dictionary.classObj = dictionary()
+            flagForObjInstantiation = 1
+            return dictionary.classObj
         else:
             return classObj
     
     def returnClassObj(self):
         return classObj
-    #static methods are exposed. One can call these methods with class-name.method name
+    #These static methods can be called with class-name.method name
     @staticmethod
     def put(k,v):
         dictionary.instantiation().putInternal(k,v)
         
-    #these internal methods are not exposed
+    
     def putInternal(self,k,v):
         dictionary.dictObj.update({k:v})
         dictionary.classObj.writeToFile()
@@ -44,7 +44,7 @@ class dictionary(object):
         except KeyError:
             print "Sorry key not found, Hence element not popped"
         dictionary.classObj.writeToFile()
-        #todo call internal fn
+        
 
     @staticmethod
     def get(k):
@@ -57,21 +57,21 @@ class dictionary(object):
         #conversion of dictionary object to json string
         jsonstring=json.dumps(dictionary.dictObj)
         #just clearing file before writing anything to it
-        open('file.txt', 'w').close()
+        open('keyvaluestore.txt', 'w').close()
         #writing a json string
-        with open('file.txt', 'w') as f:
+        with open('keyvaluestore.txt', 'w') as f:
             f.write(jsonstring)
         
      #this is the constructor. It reads file and loads all data into dictionary object   
     def __init__(self):
         try:
-            with open ("file.txt", "r") as myfile:
+            with open ("keyvaluestore.txt", "r") as myfile:
                 jsonstring=myfile.readline()
         except IOError:
             print("file did not exist and hence it will be created")
-            with open ("file.txt", "w+") as myfile:
+            with open ("keyvaluestore.txt", "w+") as myfile:
                 jsonstring=myfile.readline()
-        if os.stat("file.txt").st_size != 0:
+        if os.stat("keyvaluestore.txt").st_size != 0:
             dictionary.dictObj = json.loads(jsonstring)
             
 
