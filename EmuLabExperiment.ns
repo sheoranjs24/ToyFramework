@@ -1,0 +1,49 @@
+# Experiment For ToyFramework 
+# ========================== 
+
+# 
+# Create a new simulator object 
+# 
+set ns [new Simulator] 
+
+# 
+# Load in testbed-specific commands 
+# 
+source tb_compat.tcl 
+
+# 
+# Network topology, traffic specification, events 
+# 
+
+#
+# Configure Nodes
+#
+set maxnodes 2
+set lanstr ""
+for {set i 1} {$i <= $maxnodes} {incr i} {
+  # Select nodes
+  set node($i) [$ns node]
+  append lanstr "$node($i) "
+
+  # Set OS on the nodes
+  tb-set-node-os $node($i) UBUNTU14-64-STD
+}
+
+#
+# Create Network Link between nodes
+#
+set big-lan [$ns make-lan "$lanstr" 100Mb 0ms]  # Full Speed LAN
+# Shaped link
+#set link0 [$ns duplex-link $nodeB $nodeA 30Mb 50ms DropTail]
+#tb-set-link-loss $link0 0.01   
+
+# Set packet routing for indirect links between nodes
+$ns rtproto Static 
+
+#
+# Begin the experiment (in NS, this would begin the simulation) 
+#
+$ns run 
+
+# End Experiment
+# ==============
