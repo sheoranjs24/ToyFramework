@@ -63,15 +63,16 @@ class dictionary(object):
             f.write(jsonstring)
         
      #this is the constructor. It reads file and loads all data into dictionary object   
-    def __init__(self):
+    def __init__(self, file_path='keyvaluestore.txt'):
+        self.file_path = file_path
         try:
-            with open ("keyvaluestore.txt", "r") as myfile:
+            with open (self.file_path, "r") as myfile:
                 jsonstring=myfile.readline()
         except IOError:
             print("file did not exist and hence it will be created")
-            with open ("keyvaluestore.txt", "w+") as myfile:
+            with open (self.file_path, "w+") as myfile:
                 jsonstring=myfile.readline()
-        if os.stat("keyvaluestore.txt").st_size != 0:
+        if os.stat(self.file_path).st_size != 0:
             dictionary.dictObj = json.loads(jsonstring)
             
 

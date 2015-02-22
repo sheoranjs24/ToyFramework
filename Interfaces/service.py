@@ -4,7 +4,7 @@ def get_replica_set(key):
 def get_host():
   '''return host id of this node'''
 
-def send_message(host, msg):
+def send_message(sender, receivers, msg):
   '''send message'''
 
 def set_message_handler(handler):
