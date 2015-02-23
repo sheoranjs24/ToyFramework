@@ -9,7 +9,7 @@ class Coordinator:
         self.host = service.get_host()
         
         # Get a list of participants lists : QUESTION
-        self.participants = service.get_replica_set(data.key)
+        self.participants = service.get_replica_set()
         if (self.host in self.participants):
             self.participants.remove(self.host)
         
@@ -17,6 +17,7 @@ class Coordinator:
         # Commit Request Phase
         self.msg = dict()
         self.msg['state'] = 'QUERY TO COMMIT'
+        self.msg['coordinator'] = self.host
         self.msg['data'] = data
         self.voteList = dict()
         service.send_message(self.host, self.participants, self.msg)
@@ -57,15 +58,15 @@ class Coordinator:
                 logger.info("All votes received")
                 self.commit()
                             
-        else if msg['response'].match('VOTE NO') and msg['state'].match('QUERY TO COMMIT'):
+        elif msg['response'].match('VOTE NO') and msg['state'].match('QUERY TO COMMIT'):
             # Send ROLLBACK message to every participant
             self.rollback()
         
-        else if msg['response'].match('ACKNOWLEDGMENT') and not msg['state'].match('QUERY TO COMMIT'):
-             if sender not in self.ackList:
+        elif msg['response'].match('ACKNOWLEDGMENT') and not msg['state'].match('QUERY TO COMMIT'):
+            if sender not in self.ackList:     
                 self.ackList.append(sender)
             else:
-               logger.info("Duplicate message: %s received from: %s" % (msg['response'], sender))
+                logger.info("Duplicate message: %s received from: %s" % (msg['response'], sender))
            
            # check if all messages are collected
             if self.ackList.len() == self.participants.len():
