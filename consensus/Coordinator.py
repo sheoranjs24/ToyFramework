@@ -3,15 +3,11 @@ import service
 
 logger = logging.getLogger('ToyFramework')
 
-class Coordinator:
+class Coordinator(Object):
     
-    def __init__(self):
-        self.host = service.get_host()
-        
-        # Get a list of participants lists : QUESTION
-        self.participants = service.get_replica_set()
-        if (self.host in self.participants):
-            self.participants.remove(self.host)
+    def __init__(self, host, participants):
+        self.host = host
+        self.participants = participants
         
     def inititate_commit(self, data):
         # Commit Request Phase

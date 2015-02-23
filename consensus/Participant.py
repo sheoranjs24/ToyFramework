@@ -1,6 +1,5 @@
 import logging
 import service, api
-from IPython.external.appnope._nope import msg
 
 logger = logging.getLogger('ToyFramework')
 
