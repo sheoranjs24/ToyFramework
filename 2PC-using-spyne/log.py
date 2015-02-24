@@ -1,5 +1,8 @@
 import logging, pickle
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 class Log(object):
     
     def __init__(self, log_path='log_file.log'):

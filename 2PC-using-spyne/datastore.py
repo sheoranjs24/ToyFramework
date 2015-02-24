@@ -5,6 +5,9 @@ import pickle
 
 import transaction
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 class DataStore(object):
     
     def __init__(self, name='datastore', file_path='datastore.pkl'):

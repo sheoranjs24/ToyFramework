@@ -40,15 +40,13 @@ def main(argv):
     observer = log.PythonLoggingObserver('twisted')
     log.startLoggingWithObserver(observer.emit, setStdout=False)
 
-    application = Application([Replica], 'spyne.TM.replica.json',
-                                in_protocol=HttpRpc(), out_protocol=JsonDocument())
-    #application = Application([Replica], 'spyne.TM.replica.datastore',
-    #                            in_protocol=Soap11(), out_protocol=Soap11())
-    wsgi_app = WsgiApplication(application)
+    application = Application([Replica], 'spyne.datastore.replica.1',
+                                in_protocol=Soap11(), out_protocol=Soap11())
+    #wsgi_app = WsgiApplication(application)
     
     # Register the WSGI application as handler to wsgi server & run http server
-    resource = WSGIResource(reactor, reactor, wsgi_app)
-    #resource = TwistedWebResource(wsgi_app)
+    #resource = WSGIResource(reactor, reactor, wsgi_app)
+    resource = TwistedWebResource(application)
     site = Site(resource)
     
     reactor.listenTCP(port, site, interface=hostname)
