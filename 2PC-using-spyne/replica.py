@@ -1,3 +1,4 @@
+import logging
 from spyne.decorator import srpc, rpc
 from spyne.service import ServiceBase
 from spyne.model.complex import Iterable
@@ -27,18 +28,18 @@ class Replica(ServiceBase):
         logger.info('Replica: tpc_vote_replica()')
         return Replica.transaction_manager.tpc_vote_replica(msg)
     
-    @srpc(String, _returns=Boolean)
-    def tpc_commit_replica(msg):
+    @rpc(String)
+    def tpc_commit_replica(ctx, msg):
         logger.info('Replica: tpc_commit_replica()')
         return Replica.transaction_manager.tpc_commit_replica(msg)
     
-    @srpc(String, _returns=Boolean)
-    def tpc_abort_replica(msg):
+    @rpc(String)
+    def tpc_abort_replica(ctx, msg):
         logger.info('Replica: tpc_abort_replica()')
         return Replica.transaction_manager.tpc_abort_replica(msg)
 
     @rpc(String)
-    def tpc_ack(msg):
+    def tpc_ack(ctx, msg):
         logger.info('Replica: tpc_ack()')
         return Replica.transaction_manager.tpc_ack(msg)
 

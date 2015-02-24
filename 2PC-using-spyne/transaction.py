@@ -1,7 +1,5 @@
 
-import json
-import os
-import logging
+import json, os, logging
 from suds.client import Client
 from suds.cache import NoCache
 from spyne.client.http import HttpClient
@@ -148,15 +146,16 @@ class TransactionManager(object):
             self._DTLog.write(DTEntry)
             
             # Send ACK
-            coordinator = Client(msg['coordinator'], cache=NoCache())
+            index = self._replicaURIs.index(msg['coordinator'])
             ack_msg = {}
             ack_msg['sender'] = self.server
             ack_msg['state'] = TwoPhaseCommitMessage.ACKNOWLEDGEMENT
             ack_msg['operation'] = redoEntry
-            coordinator.service.tpc_ack(str(ack_msg))  
+            logger.info('R: sending ACK to coordinator.')
+            self._replicas[index].service.tpc_ack(str(ack_msg)) 
+            self.tcp_finish()
         else:
             logger.info('R: Wrong trx id in msg:')
-            return False
         
     def tpc_abort_replica(self, msg):
         msg = eval(msg)
@@ -174,15 +173,16 @@ class TransactionManager(object):
             self._DTLog.write(DTEntry)
             
             # Send ACK
-            coordinator = Client(msg['coordinator'], cache=NoCache())
+            index = self._replicaURIs.index(msg['coordinator'])
             ack_msg = {}
             ack_msg['sender'] = self.server
             ack_msg['state'] = TwoPhaseCommitMessage.ACKNOWLEDGEMENT
             ack_msg['operation'] = popedEntry
-            coordinator.service.tpc_ack(str(ack_msg))  
+            logger.info('R: sending ACK to coordinator')
+            self._replicas[index].service.tpc_ack(str(ack_msg)) 
+            self.tpc_finish() 
         else:
             logger.info('R: Wrong trx id in msg.')
-            return False
 
     def tpc_ack(self, msg):
         msg = eval(msg)
@@ -193,7 +193,7 @@ class TransactionManager(object):
             
             # check if all ACKs are received
             if len(self._acks) == len(self._replicas):
-                tpc_finish()
+                self.tpc_finish()
         else:
             logger.info('C: Wrong trx_id or duplicate message.')
     
@@ -215,9 +215,10 @@ class TransactionManager(object):
         msg['state'] = TwoPhaseCommitMessage.COMMIT
         msg['operation'] = redoEntry
         self._acks = []
-        logger.info('C: Sending COMMIT to replicas')
+        logger.info('C: sending COMMIT to replicas')
         for replica in self._replicas:
             replica.service.tpc_commit_replica(str(msg))
+        logger.info('C: waiting for ACKs.')
     
     def tpc_abort(self):
         logger.info('C: tpc_abort()')
@@ -240,6 +241,7 @@ class TransactionManager(object):
         logger.info('C: sending ROLLBACK to replicas')
         for replica in self._replicas:
             replica.service.tpc_abort_replica(str(msg))
+        logger.info('C: waiting for ACKs.')
         
     def tpc_finish(self):
         # Close existing trx
@@ -273,7 +275,7 @@ class TransactionManager(object):
         msg['operation'] = undoEntry 
         #self._votes = {}
         for replica in self._replicas:
-            logger.info("C: RPC call to replica: ")
+            logger.info('C: send VOTE-REQ to replicas.')
             if replica.service.tpc_vote_replica(str(msg)) == False:
                 logger.info('C: got VOTENO, hence aborting the trx.')
                 self._datastore.abort()

@@ -1,7 +1,4 @@
-import json
-import os
-import logging
-import pickle
+import json, os, logging, pickle
 
 import transaction
 
