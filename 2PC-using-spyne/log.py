@@ -1,4 +1,4 @@
-import logging
+import logging, pickle
 
 class Log(object):
     

@@ -5,9 +5,7 @@ import pickle
 
 import transaction
 
-class DataStore(ServiceBase):
-    
-    transaction_manager = transaction.manager
+class DataStore(object):
     
     def __init__(self, name='datastore', file_path='datastore.pkl'):
         self.name = name
@@ -30,13 +28,21 @@ class DataStore(ServiceBase):
         self.committed = uncommitted.copy()
 
     def get_value(self, key):
-        return self.committed[key]
+        try:
+            value = self.committed[key]
+        except KeyError:
+            print 'key not found'
+            return None
+        return value
     
     def put_value(self, key, value):
         self.uncommitted[key] = value
     
     def delete_key(self, key):
-        self.uncommited.pop(key)
+        try:
+            self.uncommited.pop(key)
+        except KeyError:
+            print 'key not found'
     
     def get_keys(self):
         return self.uncommitted.keys()
@@ -53,7 +59,7 @@ class DataStore(ServiceBase):
     def abort(self, transaction):
         self.uncommitted = self.committed.copy()
 
-    def commit(self, transaction):
+    def commit(self):
         data_file = open(self.data_path, 'w')
         pickle.dump(self.uncommitted, data_file)
         self.committed = self.uncommitted.copy()

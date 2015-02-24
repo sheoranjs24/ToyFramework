@@ -2,15 +2,10 @@
 import json
 import os
 import logging
-
-from spyne.decorator import srpc
-from spyne.service import ServiceBase
-from spyne.model.complex import Iterable, Integer, String, Boolean
 from suds.client import Client
 
 from log import Log
 from datastore import DataStore
-from __builtin__ import None
 
 class TwoPhaseCommitMessage:
     VOTEREQ = "Vote Request"
@@ -27,7 +22,7 @@ class DTLogMessage:
     COMMIT = "Commit"
     ABORT = "Abort"
 
-class TransactionManager(ServiceBase):
+class TransactionManager(object):
     
     def __init__(self, undo_log='undo.log', redo_log='redo.log', dt_log='distributed_transaction.log', 
                  server=None, replica_uri_list=None):
@@ -43,24 +38,35 @@ class TransactionManager(ServiceBase):
         # Create connection with replicas
         self._replicas = []
         #self._votes = {}
-        if replica_uri is not None:
+        if replica_uri_list is not None:
             for uri in replica_uri_list:
-                if not uri.match(self.server):
+                if not uri.find(self.server):
                     self._replicas.append(Client(uri))
+    
+    def set_server(self, server):
+        self.server = server
+        return True
+    
+    def add_replica(self, replica_uri):
+        if type(replica_uri) is list:
+            for uri in replica_uri:
+                self._replicas.append(Client(uri))
+        else:
+            self._replicas.append(Client(replica_uri))
+        return True
     
     def tpc_begin(self):
         # Create new transaction
         if self.currTransactionIndex is not None:
-            return false
+            return False
         else:
             print '\nNew Trx'
             if self._prevTransactionIndex is None:
                 self.currTransactionIndex = 1
             else:
                 self.currTransactionIndex = self._prevTransactionIndex + 1
-            return success
+            return True
     
-    @srpc(String, _returns=Boolean)
     def tpc_vote_replica(self, msg):
         # Check if a trx is already in process
         if self.currTransactionIndex is not None \
@@ -91,11 +97,11 @@ class TransactionManager(ServiceBase):
             self._undoLog.write(undoEntry)
             
             # Write to datastore
-            if msg['operation'][1].match('put'):
+            if msg['operation'][1].find('put'):
                 key = msg['operation'][2]
                 value = msg['operation'][3]
                 self._datastore.put_value(key, value) 
-            elif msg['operation'][1].match('delete'):
+            elif msg['operation'][1].find('delete'):
                 key = msg['operation'][2]
                 self._datastore.delete_key(key)
             else:
@@ -110,8 +116,6 @@ class TransactionManager(ServiceBase):
         # Send Vote
         return True
         
-                
-    @srpc(String, _returns=Boolean)
     def tpc_commit_replica(self, msg):
         # Check trx id
         if self.currTransactionIndex is not None \
@@ -136,8 +140,6 @@ class TransactionManager(ServiceBase):
             print '\nWrong trx id in msg:', msg
             return False
         
-    
-    @srpc(String, _returns=Boolean)
     def tpc_abort_replica(self, msg):
         # Check trx id
         if self.currTransactionIndex is not None \
@@ -161,8 +163,7 @@ class TransactionManager(ServiceBase):
         else:
             print '\nWrong trx id in msg:', msg
             return False
-    
-    @srpc(String, _returns=String)
+
     def tpc_ack(self, msg):
         if int(msg['operation'][0]) == self.currTransactionIndex \
             and msg['sender'] not in self._acks:
@@ -218,7 +219,6 @@ class TransactionManager(ServiceBase):
         self._prevTransactionIndex = self.currTransactionIndex
         self.currTransactionIndex = None
     
-    @srpc(String, _returns=Boolean)
     def put(self, key, value):
         # Commit Phase 1 
         # Perform Action locally
@@ -253,8 +253,7 @@ class TransactionManager(ServiceBase):
         self.tpc_commit()
         print('\nAdded (%s, %s) to the data-store' % (key, value))
         return True
-    
-    @srpc(String, _returns=Boolean)      
+          
     def delete(self, key):
         # Commit Phase 1 
         # Perform Action locally
@@ -290,7 +289,6 @@ class TransactionManager(ServiceBase):
         print('\nAdded (%s, %s) to the data-store' % (key, value))
         return True
     
-    @srpc(String, _returns=String)
     def get(self, key):  
         localValue = self._datastore.get_value(key)
         replicaValue = None
@@ -304,11 +302,5 @@ class TransactionManager(ServiceBase):
                 return None
         return localValue
     
-    @srpc(String, _returns=String)
     def get_value_replica(self, key):
         return self._datastore.get_value(key)
-        
-        
-    
-     
-        
