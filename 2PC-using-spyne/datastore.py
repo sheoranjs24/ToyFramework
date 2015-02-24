@@ -56,7 +56,7 @@ class DataStore(object):
     def __repr__(self):
         return self.uncommitted.__repr__()
     
-    def abort(self, transaction):
+    def abort(self):
         self.uncommitted = self.committed.copy()
 
     def commit(self):

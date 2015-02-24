@@ -1,6 +1,6 @@
 import logging, sys, getopt
 from suds.client import Client
-
+from spyne.client.http import HttpClient
 
 def main(argv):
     # logging
@@ -8,7 +8,7 @@ def main(argv):
     logging.getLogger('client').setLevel(logging.INFO)
     
     # command-line arguments
-    uri_file = ['http://localhost:7789/?wsdl', 'http://localhost:7788/?wsdl']
+    uri_file = ['http://localhost:7788/?wsdl', 'http://localhost:7789/?wsdl']
     uriFilePath = None
     try:
        opts, args = getopt.getopt(argv,"hU:",["uri_file="])
@@ -28,7 +28,7 @@ def main(argv):
             uri_file = open(uriFilePath, 'r')
         except IOError:
             print 'unable to open URI file'
-            uri_file = ['http://localhost:7789/?wsdl', 'http://localhost:7788/?wsdl'] #TODO: remove this line
+            uri_file = ['http://localhost:7788/?wsdl', 'http://localhost:7789/?wsdl'] #TODO: remove this line
             
     # Create one client for each replica of server
     clients = []
@@ -37,6 +37,7 @@ def main(argv):
         uriList.append(uri)
         clients.append(Client(uri))
     
+    #print "client: ", clients[0], dir(clients[0])
     # Add server and replica info
     print "Adding replicas", len(uriList)
     counter=-1
@@ -44,10 +45,10 @@ def main(argv):
         counter = counter + 1
         address = uriList[counter]
         print "address: ", address
-        clients[counter].service.set_server()
+        clients[counter].service.set_server(address)
         for uri in uriList:
-            if not uri.find(uriList[counter]):
-                clients[counter].service.add_replica(uriList[counter])
+            if not uri.find(address):
+                clients[counter].service.add_replica(address)
     
     print "starting queries..."
     print clients[0].service.get('key1')

@@ -3,9 +3,11 @@ import json
 import os
 import logging
 from suds.client import Client
+from spyne.client.http import HttpClient
 
 from log import Log
 from datastore import DataStore
+#from server import application
 
 class TwoPhaseCommitMessage:
     VOTEREQ = "Vote Request"
@@ -48,11 +50,7 @@ class TransactionManager(object):
         return True
     
     def add_replica(self, replica_uri):
-        if type(replica_uri) is list:
-            for uri in replica_uri:
-                self._replicas.append(Client(uri))
-        else:
-            self._replicas.append(Client(replica_uri))
+        self._replicas.append(Client(replica_uri))
         return True
     
     def tpc_begin(self):
@@ -68,6 +66,7 @@ class TransactionManager(object):
             return True
     
     def tpc_vote_replica(self, msg):
+        msg = eval(msg)
         # Check if a trx is already in process
         if self.currTransactionIndex is not None \
             and self.currTransactionIndex != int(msg['operation'][0]):
@@ -78,7 +77,8 @@ class TransactionManager(object):
         
         # Check if trx if behind
         #TODO: Handle greater_than & less_than separately?
-        if self._prevTransactionIndex+1 != int(msg['operation'][0]): 
+        if self._prevTransactionIndex is not None \
+            and self._prevTransactionIndex+1 != int(msg['operation'][0]): 
             print '\ntrx is behind the coordinator', msg
             DTEntry = [DTLogMessage.VOTEDNO, str(self.currTransactionIndex)]
             self._DTLog.write(DTEntry)
@@ -117,6 +117,7 @@ class TransactionManager(object):
         return True
         
     def tpc_commit_replica(self, msg):
+        msg = eval(msg)
         # Check trx id
         if self.currTransactionIndex is not None \
             and self.currTransactionIndex == int(msg['operation'][0]):   
@@ -130,17 +131,18 @@ class TransactionManager(object):
             self._DTLog.write(DTEntry)
             
             # Send ACK
-            coordinator = Client(msg['Coordinator'])
+            coordinator = Client(msg['coordinator'])
             ack_msg = {}
             ack_msg['sender'] = self.server
             ack_msg['state'] = TwoPhaseCommitMessage.ACKNOWLEDGEMENT
             ack_msg['operation'] = redoEntry
-            coordinator.tpc_ack(ack_msg)  
+            coordinator.service.tpc_ack(str(ack_msg))  
         else:
             print '\nWrong trx id in msg:', msg
             return False
         
     def tpc_abort_replica(self, msg):
+        msg = eval(msg)
         # Check trx id
         if self.currTransactionIndex is not None \
             and self.currTransactionIndex == int(msg['operation'][0]):   
@@ -154,17 +156,18 @@ class TransactionManager(object):
             self._DTLog.write(DTEntry)
             
             # Send ACK
-            coordinator = Client(msg['Coordinator'])
+            coordinator = Client(msg['coordinator'])
             ack_msg = {}
             ack_msg['sender'] = self.server
             ack_msg['state'] = TwoPhaseCommitMessage.ACKNOWLEDGEMENT
             ack_msg['operation'] = popedEntry
-            coordinator.tpc_ack(ack_msg)  
+            coordinator.service.tpc_ack(str(ack_msg))  
         else:
             print '\nWrong trx id in msg:', msg
             return False
 
     def tpc_ack(self, msg):
+        msg = eval(msg)
         if int(msg['operation'][0]) == self.currTransactionIndex \
             and msg['sender'] not in self._acks:
             self._acks.append(msg['sender'])
@@ -193,7 +196,7 @@ class TransactionManager(object):
         msg['operation'] = redoEntry
         self._acks = []
         for replica in self._replicas:
-            replica.tpc_commit_replica(msg)
+            replica.service.tpc_commit_replica(str(msg))
     
     def tpc_abort(self):
         # Abort trx locally
@@ -211,7 +214,7 @@ class TransactionManager(object):
         msg['operation'] = popedEntry
         self._acks = []
         for replica in self._replicas:
-            replica.tpc_abort_replica(msg)
+            replica.service.tpc_abort_replica(str(msg))
         
     def tpc_finish(self):
         # Close existing trx
@@ -242,7 +245,8 @@ class TransactionManager(object):
         msg['operation'] = undoEntry 
         #self._votes = {}
         for replica in self._replicas:
-            if not replica.tpc_vote_replica(msg):
+            print "RPC call to replica: "
+            if not replica.service.tpc_vote_replica(str(msg)):
                 print '\ngot VOTENO, hence aborting the trx.'
                 self._datastore.abort()
                 self._undoLog.pop()
@@ -277,7 +281,7 @@ class TransactionManager(object):
         msg['operation'] = undoEntry 
         #self._votes = {}
         for replica in self._replicas:
-            if not replica.tpc_vote_replica(msg):
+            if not replica.service.tpc_vote_replica(str(msg)):
                 print '\nG\got VOTENO, hence aborting the trx.'
                 self._datastore.abort()
                 self._undoLog.pop()
@@ -294,7 +298,7 @@ class TransactionManager(object):
         replicaValue = None
         
         for replica in self._replicas:
-            replicaValue = replica.get_value_replica(key)
+            replicaValue = replica.service.get_value_replica(key)
             if replicaValue is not None \
                 and localValue is not None \
                 and replicaValue!=localValue:
