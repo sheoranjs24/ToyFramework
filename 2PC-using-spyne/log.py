@@ -26,7 +26,11 @@ class Log(object):
         print "log: ", msg
         
     def peek(self):
-        return self.log[len(self.log)-1]
+        print "logg:", self.log
+        if len(self.log) == 0:
+            return None
+        else:
+            return self.log[len(self.log)-1]
         
     def pop(self):
         self.log.pop()

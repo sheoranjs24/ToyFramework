@@ -47,7 +47,8 @@ def main(argv):
         print "address: ", address
         clients[counter].service.set_server(address)
         for uri in uriList:
-            if not uri.find(address):
+            if uri.find(address) == -1:
+                print "replica: ", uri
                 clients[counter].service.add_replica(address)
     
     print "starting queries..."

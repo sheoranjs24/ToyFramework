@@ -42,7 +42,7 @@ class TransactionManager(object):
         #self._votes = {}
         if replica_uri_list is not None:
             for uri in replica_uri_list:
-                if not uri.find(self.server):
+                if uri.find(self.server) == -1:
                     self._replicas.append(Client(uri))
     
     def set_server(self, server):
@@ -50,7 +50,12 @@ class TransactionManager(object):
         return True
     
     def add_replica(self, replica_uri):
-        self._replicas.append(Client(replica_uri))
+        if len(self._replicas)==0: 
+            self._replicas = []
+            self._replicas.append(Client(replica_uri))
+        else:
+            self._replicas.append(Client(replica_uri))
+        print "replica added: ", len(self._replicas)
         return True
     
     def tpc_begin(self):
@@ -86,7 +91,7 @@ class TransactionManager(object):
         
         # Begin Trx
         status = self.tpc_begin()
-        if not status:
+        if status == False:
             print '\nunable to begin trx'
             DTEntry = [DTLogMessage.VOTEDNO, str(self.currTransactionIndex)]
             self._DTLog.write(DTEntry)
@@ -97,11 +102,11 @@ class TransactionManager(object):
             self._undoLog.write(undoEntry)
             
             # Write to datastore
-            if msg['operation'][1].find('put'):
+            if msg['operation'][1].find('put') == 0:
                 key = msg['operation'][2]
                 value = msg['operation'][3]
                 self._datastore.put_value(key, value) 
-            elif msg['operation'][1].find('delete'):
+            elif msg['operation'][1].find('delete') == 0:
                 key = msg['operation'][2]
                 self._datastore.delete_key(key)
             else:
@@ -173,7 +178,7 @@ class TransactionManager(object):
             self._acks.append(msg['sender'])
             
             # check if all ACKs are received
-            if len(self._acks) == len(self._replicas.keys()):
+            if len(self._acks) == len(self._replicas):
                 tpc_finish()
             return 'Success'
         else:
@@ -246,7 +251,7 @@ class TransactionManager(object):
         #self._votes = {}
         for replica in self._replicas:
             print "RPC call to replica: "
-            if not replica.service.tpc_vote_replica(str(msg)):
+            if replica.service.tpc_vote_replica(str(msg)) == False:
                 print '\ngot VOTENO, hence aborting the trx.'
                 self._datastore.abort()
                 self._undoLog.pop()
