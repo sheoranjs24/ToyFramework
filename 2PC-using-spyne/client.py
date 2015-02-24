@@ -1,5 +1,7 @@
 import logging, sys, getopt
 from suds.client import Client
+from suds.sax.element import Element
+from suds.cache import NoCache
 from spyne.client.http import HttpClient
 
 def main(argv):
@@ -8,7 +10,8 @@ def main(argv):
     logging.getLogger('client').setLevel(logging.INFO)
     
     # command-line arguments
-    uri_file = ['http://localhost:7788/?wsdl', 'http://localhost:7789/?wsdl']
+    uri_file = ['http://localhost:7788/?wsdl', 'http://142.104.21.244:7789/?wsdl']
+    locations = ['http://localhost:7788/', 'http://142.104.21.244:7789/']
     uriFilePath = None
     try:
        opts, args = getopt.getopt(argv,"hU:",["uri_file="])
@@ -33,9 +36,12 @@ def main(argv):
     # Create one client for each replica of server
     clients = []
     uriList = []
+    counter =  -1
     for uri in uri_file:
+        counter += 1
         uriList.append(uri)
-        clients.append(Client(uri))
+        c = Client(uri, cache=NoCache())
+        clients.append(c)
     
     #print "client: ", clients[0], dir(clients[0])
     # Add server and replica info

@@ -3,6 +3,7 @@ import json
 import os
 import logging
 from suds.client import Client
+from suds.cache import NoCache
 from spyne.client.http import HttpClient
 
 from log import Log
@@ -43,7 +44,7 @@ class TransactionManager(object):
         if replica_uri_list is not None:
             for uri in replica_uri_list:
                 if uri.find(self.server) == -1:
-                    self._replicas.append(Client(uri))
+                    self._replicas.append(Client(uri, cache=NoCache()))
     
     def set_server(self, server):
         self.server = server
@@ -52,10 +53,10 @@ class TransactionManager(object):
     def add_replica(self, replica_uri):
         if len(self._replicas)==0: 
             self._replicas = []
-            self._replicas.append(Client(replica_uri))
+            self._replicas.append(Client(replica_uri, cache=NoCache()))
         else:
-            self._replicas.append(Client(replica_uri))
-        print "replica added: ", len(self._replicas)
+            self._replicas.append(replica_uri)
+        print "replica added: ", replica_uri, "server: ", self.server
         return True
     
     def tpc_begin(self):
@@ -72,6 +73,7 @@ class TransactionManager(object):
     
     def tpc_vote_replica(self, msg):
         msg = eval(msg)
+        print "message:", msg, "server: ", self.server
         # Check if a trx is already in process
         if self.currTransactionIndex is not None \
             and self.currTransactionIndex != int(msg['operation'][0]):
@@ -123,6 +125,7 @@ class TransactionManager(object):
         
     def tpc_commit_replica(self, msg):
         msg = eval(msg)
+        print "message:", msg, "server: ", self.server
         # Check trx id
         if self.currTransactionIndex is not None \
             and self.currTransactionIndex == int(msg['operation'][0]):   
@@ -136,7 +139,7 @@ class TransactionManager(object):
             self._DTLog.write(DTEntry)
             
             # Send ACK
-            coordinator = Client(msg['coordinator'])
+            coordinator = Client(msg['coordinator'], cache=NoCache())
             ack_msg = {}
             ack_msg['sender'] = self.server
             ack_msg['state'] = TwoPhaseCommitMessage.ACKNOWLEDGEMENT
@@ -148,6 +151,7 @@ class TransactionManager(object):
         
     def tpc_abort_replica(self, msg):
         msg = eval(msg)
+        print "message:", msg, "server: ", self.server
         # Check trx id
         if self.currTransactionIndex is not None \
             and self.currTransactionIndex == int(msg['operation'][0]):   
@@ -161,7 +165,7 @@ class TransactionManager(object):
             self._DTLog.write(DTEntry)
             
             # Send ACK
-            coordinator = Client(msg['coordinator'])
+            coordinator = Client(msg['coordinator'], cache=NoCache())
             ack_msg = {}
             ack_msg['sender'] = self.server
             ack_msg['state'] = TwoPhaseCommitMessage.ACKNOWLEDGEMENT
@@ -173,6 +177,7 @@ class TransactionManager(object):
 
     def tpc_ack(self, msg):
         msg = eval(msg)
+        print "message:", msg, "server: ", self.server
         if int(msg['operation'][0]) == self.currTransactionIndex \
             and msg['sender'] not in self._acks:
             self._acks.append(msg['sender'])
@@ -197,6 +202,7 @@ class TransactionManager(object):
         
         msg = {}
         msg['coordinator'] = self.server
+        msg['sender'] = self.server
         msg['state'] = TwoPhaseCommitMessage.COMMIT
         msg['operation'] = redoEntry
         self._acks = []
@@ -215,6 +221,7 @@ class TransactionManager(object):
         
         msg = {}
         msg['coordinator'] = self.server
+        msg['sender'] = self.server
         msg['state'] = TwoPhaseCommitMessage.ROLLBACK
         msg['operation'] = popedEntry
         self._acks = []
@@ -246,6 +253,7 @@ class TransactionManager(object):
         
         msg = {}
         msg['coordinator'] = self.server
+        msg['sender'] = self.server
         msg['state'] = TwoPhaseCommitMessage.VOTEREQ
         msg['operation'] = undoEntry 
         #self._votes = {}
@@ -282,6 +290,7 @@ class TransactionManager(object):
         
         msg = {}
         msg['coordinator'] = self.server
+        msg['sender'] = self.server
         msg['state'] = TwoPhaseCommitMessage.VOTEREQ
         msg['operation'] = undoEntry 
         #self._votes = {}
