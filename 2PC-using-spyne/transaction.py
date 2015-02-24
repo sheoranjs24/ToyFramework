@@ -138,6 +138,7 @@ class TransactionManager(object):
         if self.currTransactionIndex is not None \
             and self.currTransactionIndex == int(msg['operation'][0]):   
             # Commit trx locally
+            logger.debug("Writing to REDO log.")
             redoEntry = self._undoLog.peek()
             self._redoLog.write(redoEntry)
             self._datastore.commit()
@@ -199,6 +200,7 @@ class TransactionManager(object):
     def tpc_commit(self):
         logger.info('C: tpc_commit()')
         # Commit trx locally
+        logger.debug("writing to REDO log")
         redoEntry = self._undoLog.peek()
         self._redoLog.write(redoEntry)
         self._datastore.commit()
@@ -255,6 +257,7 @@ class TransactionManager(object):
             return False
         else:
             # Write entry into undo log
+            logger.debug("writing to UNDO log")
             undoEntry = [str(self.currTransactionIndex), 'put', key, value]
             self._undoLog.write(undoEntry)
             self._datastore.put_value(key, value)
@@ -293,6 +296,7 @@ class TransactionManager(object):
             return False 
         else:
             # Write entry into undo log
+            logger.debug("writing to UNDO log")
             undoEntry = [str(self.currTransactionIndex), 'delete', key, value]
             self._undoLog.write(undoEntry)
             self._datastore.delete_key(key, value)

@@ -26,10 +26,10 @@ class Log(object):
         # write to file
         log_file = open(self.log_path, 'w')
         pickle.dump(self.log, log_file)
-        print "log: ", msg
+        logger.info('Add to log: %s', msg)
         
     def peek(self):
-        print "logg:", self.log
+        logger.info('Latest entry in log: %s', self.log)
         if len(self.log) == 0:
             return None
         else:
