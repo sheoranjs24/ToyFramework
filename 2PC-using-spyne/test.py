@@ -4,11 +4,10 @@ from suds.client import Client
 import transaction
 import datastore
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level)s: %(message)s')
+
 def main(uri):
-    # logging
-    logging.basicConfig(level=logging.DEBUG)
-    logging.getLogger('client').setLevel(logging.DEBUG)
-    
+
     userA = Client(uri)
     
     print userA.get_value('key1')
