@@ -62,7 +62,7 @@ class dictionary(object):
         with open('keyvaluestore.txt', 'w') as f:
             f.write(jsonstring)
         
-     #this is the constructor. It reads file and loads all data into dictionary object   
+    #this is the constructor. It reads file and loads all data into dictionary object   
     def __init__(self, file_path='keyvaluestore.txt'):
         self.file_path = file_path
         try:

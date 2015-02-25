@@ -18,7 +18,7 @@ source tb_compat.tcl
 #
 # Configure Nodes
 #
-set maxnodes 2
+set maxnodes 4
 set lanstr ""
 for {set i 1} {$i <= $maxnodes} {incr i} {
   # Select nodes

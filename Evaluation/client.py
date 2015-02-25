@@ -24,6 +24,7 @@ Steps:
  4. perform operations like get, put, delete on RM1
  """
 
+"""
 server = ''  #ReplicaManager
 
 # Create a transaction manager
@@ -37,6 +38,19 @@ TM.register(rc1)
 TM.register(rc2)
 
 trx = TM.being_transaction()
+"""
 
-
+class Client(object):
+    def __init__(self, name, dictionary):
+        self.name = name
+        self.data_store = dictionary
+        
+    def print_name(self):
+        print("This is {0}.".format(self.name))
+    
+    def get_value(self, key):
+        return self.data_store.get(key)
+    
+    def delete(self, key):
+        return self.data_store.delete(key)
 
