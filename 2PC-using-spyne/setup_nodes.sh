@@ -14,8 +14,11 @@ then
   echo "Error while updating the server."
 fi
 
+sudo apt-get install build-essential
+sudo apt-get install libssl-dev
 sudo apt-get install -y libxml2-dev 
-sudo apt-get install -y libxslt1-dev 
+sudo apt-get install -y libxslt1-dev
+sudo apt-get install -y libevent-dev 
 sudo apt-get install -y python-dev 
 sudo apt-get install -y git
 sudo apt-get install -y curl

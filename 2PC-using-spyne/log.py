@@ -40,3 +40,6 @@ class Log(object):
         # write to file
         log_file = open(self.log_path, 'w')
         pickle.dump(self.log, log_file)
+    
+    def size(self):
+        return len(self.log)

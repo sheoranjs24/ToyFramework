@@ -49,7 +49,7 @@ class TransactionManager(object):
                     self._replicas.append(Client(uri, cache=NoCache()))
         
         # check logs in case we need recovery
-        check_logs()
+        #self.check_logs()
     
     def set_server(self, server):
         logging.info('TM: set_server() called.')
@@ -364,24 +364,58 @@ class TransactionManager(object):
     
     def check_logs(self):
         # check DTLog for last commit
+        if (self._DTLog.size() == 0):
+            return
+        
         last_trx = []
         last_trx = last_trx + self._DTLog.peek()
+        
+        # coordinator start-2pc
         if last_trx[0].find(DTLogMessage.START2PC) == 0:
             logging.info("C: node was coordinator in last trx!")
-            #abort
+
             #check redo logs
             redo_trx = self._redoLog.peek()
             if redo_trx[0] >= last_trx[0]:
                 self._rollback(redo_trx)
+                return
             
             #check undo-logs
-            self.tpc_abort()
+            undo_trx = self._undoLog.peek()
+            if undo_trx[0] >= last_trx[0]:
+                self.tpc_abort()
+        # voted YES
         elif last_trx[0].find(DTLogMessage.VOTEDYES) == 0:
             pass
+        # voted NO
         elif last_trx[0].find(DTLogMessage.VOTEDNO) == 0:
             pass
+        # committed
         elif last_trx[0].find(DTLogMessage.COMMIT) == 0:
-            pass
+            # send commit msg to replicas
+            msg = {}
+            msg['coordinator'] = self.server
+            msg['sender'] = self.server
+            msg['state'] = TwoPhaseCommitMessage.COMMIT
+            msg['operation'] = self._redoLog.peek()
+            self._acks = []
+            logging.info('C: sending ROLLBACK to replicas')
+            for replica in self._replicas:
+                replica.service.tpc_abort_replica(str(msg))
+            logging.info('C: waiting for ACKs.')
+            self.tpc_finish()
+        # aborted
         elif last_trx[0].find(DTLogMessage.ABORT) == 0:
-            pass
+            # send abort message to nodes
+            msg = {}
+            msg['coordinator'] = self.server
+            msg['sender'] = self.server
+            msg['state'] = TwoPhaseCommitMessage.ROLLBACK
+            msg['operation'] = self._undoLog.peek()
+            self._acks = []
+            logging.info('C: sending ROLLBACK to replicas')
+            for replica in self._replicas:
+                replica.service.tpc_abort_replica(str(msg))
+            logging.info('C: waiting for ACKs.')
+            self.tpc_finish()
     
