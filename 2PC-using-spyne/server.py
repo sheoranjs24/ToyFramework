@@ -34,7 +34,7 @@ def main(argv):
         elif opt in ("-H", "--host"):
             hostname = arg
         elif opt in ("-P", "--port"):
-            port = arg
+            port = int(arg)
     
     # Initialize the application
     observer = log.PythonLoggingObserver('twisted')

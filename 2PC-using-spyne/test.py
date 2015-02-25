@@ -19,7 +19,7 @@ def main(argv):
             print './test.py -P <port> -F <serverFile>'
             sys.exit()
         elif opt in ("-P", "--port"):
-            port = arg
+            port = int(arg)
         elif opt in ("-U", "--serverFile="):
             serverFile = arg
     

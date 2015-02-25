@@ -368,7 +368,7 @@ class TransactionManager(object):
             return
         
         last_trx = []
-        last_trx = last_trx + self._DTLog.peek()
+        last_trx = self._DTLog.peek()
         
         # coordinator start-2pc
         if last_trx[0].find(DTLogMessage.START2PC) == 0:
