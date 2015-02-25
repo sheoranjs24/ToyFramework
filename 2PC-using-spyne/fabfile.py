@@ -39,7 +39,8 @@ except:
     
 env.roledefs.update({
     'server': servers,
-    'client': clients
+    'client': clients,
+    'configServer': servers[0]
 })
 
 #-----------------------
@@ -55,12 +56,18 @@ def uptime():
 @parallel
 def start_servers():
     with hide('running','warnings'), settings(warn_only=True):
-        put('server_setup_script.sh %s' % env.server_port, mode=0755)
-        run('/root/server_setup_script.sh')
+        put('server_setup_script.sh', mode=0755)
+        run('/root/server_setup_script.sh %s' % env.server_port)
+
+@roles('configServer')
+def configure_replicas():
+     with hide('running','warnings'), settings(warn_only=True):
+        put('replica_config.py', mode=0755)
+        run('python /root/replica_config.py %s' % env.server_port)
 
 @roles('client')
 @parallel
 def start_clients():
     with hide('running','warnings'), settings(warn_only=True):
-        put('client_setup_script.sh %s' % env.server_port, mode=0755)
-        run('/root/client_setup_script.sh')
+        put('client_setup_script.sh', mode=0755)
+        run('/root/client_setup_script.sh %s' % env.server_port)
