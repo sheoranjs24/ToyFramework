@@ -1,8 +1,6 @@
-import logging
+import logging, sys, getopt
 from suds.client import Client
-
-import transaction
-import datastore
+from suds.cache import NoCache
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level)s: %(message)s')
 

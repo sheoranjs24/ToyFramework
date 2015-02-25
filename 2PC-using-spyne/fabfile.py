@@ -5,7 +5,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 
 #-----------------------
 # Fabric Configuration
-env.key_filename="/Volumes/JSHome/Users/sheoranjs24//.ssh/emulab_rsa"
+env.key_filename="/Volumes/JSHome/Users/sheoranjs24/.ssh/emulab_rsa"
 env.user='jsheoran'
 env.server_port = 7789
 
