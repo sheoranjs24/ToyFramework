@@ -1,2 +1,2 @@
-pc292
-pc299
+pc292.emulab.net
+pc299.emulab.net

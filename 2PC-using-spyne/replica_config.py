@@ -27,7 +27,7 @@ def main(argv):
     if serverFile is None:
         logging.error("serverFile is needed to add replicas.")
         sys.exit(1)
-    
+    sfile = None
     try:
         sfile = open(serverFile, 'r')
     except:
@@ -35,7 +35,7 @@ def main(argv):
         sys.exit(1)
     
     servers = []
-    for line in serverFile:
+    for line in sfile:
         uri = 'http://' + line + ':' + port + '/?wsdl'  #'http://localhost:7789/?wsdl' 
         servers.append(uri)
     

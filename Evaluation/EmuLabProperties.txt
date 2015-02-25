@@ -1,5 +1,4 @@
 user=jsheoran
-domain=.emulab.net
 sshFile=.ssh/emulab_rsa
 path='/Volumes/JSHome/Users/sheoranjs24/Code/Grad-school-work/ToyFramework/Evaluation/'
 nodeFile='EmulabNodes.txt'

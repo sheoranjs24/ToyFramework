@@ -8,16 +8,15 @@ def main(argv):
     
     # Command-line arguments
     port = 7789
-    clientFile = None
     serverFile = None
     try:
-       opts, args = getopt.getopt(argv,"hP:U:",["port=", "serverFile="])
+       opts, args = getopt.getopt(argv,"hP:F:",["port=", "serverFile="])
     except getopt.GetoptError:
-        print './test.py -H <hostFile> -P <port> -F <clientFile>'
+        print './test.py -P <port> -F <serverFile>'
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print './test.py -H <hostFile> -P <port> -F <clientFile>'
+            print './test.py -P <port> -F <serverFile>'
             sys.exit()
         elif opt in ("-P", "--port"):
             port = arg
@@ -28,7 +27,7 @@ def main(argv):
     if serverFile is none:
         logging.error('No server or client name provided.')
         sys.exit(1)
-        
+    sfile = None 
     try:
         sfile = open(serverFile, 'r')
     except:
@@ -36,7 +35,7 @@ def main(argv):
         sys.exit(1)
     
     servers = []
-    for line in serverFile:
+    for line in sfile:
         uri = 'http://' + line + ':' + port + '/?wsdl'  #'http://hostname:7789/?wsdl' 
         servers.append(uri)
     

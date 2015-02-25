@@ -1,13 +1,14 @@
 from fabric.api import *
 import logging
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level)s: %(message)s')
+#logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level)s: %(message)s')
 
 #-----------------------
 # Fabric Configuration
 env.key_filename="/Volumes/JSHome/Users/sheoranjs24/.ssh/emulab_rsa"
 env.user='jsheoran'
 env.server_port = 7789
+env.home_dir = '/users/jsheoran'
 
 # Read nodes name from the file
 env.hosts = []
@@ -55,19 +56,20 @@ def uptime():
 @roles('server')
 @parallel
 def start_servers():
-    with hide('running','warnings'), settings(warn_only=True):
+    with hide('warnings'), settings(warn_only=True):
         put('server_setup_script.sh', mode=0755)
-        run('/root/server_setup_script.sh %s' % env.server_port)
+        run("/bin/bash %s/server_setup_script.sh -P %d" % (env.home_dir, env.server_port))
 
 @roles('configServer')
 def configure_replicas():
-     with hide('running','warnings'), settings(warn_only=True):
+     with hide('warnings'), settings(warn_only=True):
         put('replica_config.py', mode=0755)
-        run('python /root/replica_config.py %s' % env.server_port)
+        serverFile = env.home_dir + '/ToyFramework/2PC-using-spyne/server-nodes.txt'
+        run("python %s/replica_config.py -P %d -F %s" % (env.home_dir, env.server_port, serverFile))
 
 @roles('client')
 @parallel
 def start_clients():
-    with hide('running','warnings'), settings(warn_only=True):
+    with hide('warnings'), settings(warn_only=True):
         put('client_setup_script.sh', mode=0755)
-        run('/root/client_setup_script.sh %s' % env.server_port)
+        run("/bin/bash %s/client_setup_script.sh -P %d" % (env.home_dir, env.server_port))
