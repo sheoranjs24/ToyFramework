@@ -16,8 +16,8 @@ from replica import Replica
 
 def main(argv):
     # logging
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level)s: %(message)s')
-    #logging.getLogger('server').setLevel(logging.INFO)
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s: %(message)s')
+    logging.getLogger('server').setLevel(logging.INFO)
         
     # command-line arguments
     hostname = '127.0.0.1'  

@@ -5,7 +5,7 @@ import pickle
 
 import transaction
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s: %(message)s')
 #logging.getLogger(__name__).setLevel(logging.INFO)
 
 class DataStore(object):

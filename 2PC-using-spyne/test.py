@@ -2,7 +2,7 @@ import logging, sys, getopt
 from suds.client import Client
 from suds.cache import NoCache
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s: %(message)s')
 
 def main(argv):
     

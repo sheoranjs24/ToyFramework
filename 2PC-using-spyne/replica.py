@@ -6,7 +6,7 @@ from spyne.model import  Integer, String, Boolean
 
 from transaction import TransactionManager
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s: %(message)s')
 #logging.getLogger(__name__).setLevel(logging.INFO)
 
 class Replica(ServiceBase):
