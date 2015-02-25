@@ -6,10 +6,12 @@ from spyne.client.http import HttpClient
 from twisted.web import client
 #from spyne.client.twisted import 
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level)s: %(message)s')
+#logging.getLogger(__name__).setLevel(logging.INFO)
+
 def main(argv):
     # logging
-    logging.basicConfig(level=logging.INFO)
-    logging.getLogger('client').setLevel(logging.INFO)
+    #logging = logging.getlogging('client').setLevel(logging.DEBUG)
     
     # command-line arguments
     uri_file = ['http://127.0.0.1:7788/?wsdl', 'http://127.0.0.1:7789/?wsdl']
@@ -31,7 +33,7 @@ def main(argv):
         try:
             uri_file = open(uriFilePath, 'r')
         except IOError:
-            print 'unable to open URI file'
+            logging.error('unable to open URI file')
             uri_file = ['http://127.0.0.1:7788/?wsdl', 'http://127.0.0.1:7789/?wsdl'] #TODO: remove this line     
     
     # Create one client for each replica of server
@@ -42,19 +44,19 @@ def main(argv):
         counter += 1
         uriList.append(uri)
         #c = Client('file://' + uri, nosend=True, autoblend=True, cache=NoCache())
-        c = Client(uri, cache=NoCache())
+        c = Client(uri, cache=NoCache(), timeout=120)
         clients.append(c)
         
     
     #print "client: ", clients[0], dir(clients[0])
     # Add server and replica info
-    print "Adding replicas", len(uriList)
+    logging.debug('Adding replicas %d', len(uriList))
     counter=-1
     while (counter < len(uriList)-1):
-        print "counter: ", counter
+        logging.debug('counter: %d', counter)
         counter = counter + 1
         # set server
-        print "server: ", uriList[counter]
+        logging.debug('server: %s', uriList[counter])
         clients[counter].service.set_server(uriList[counter])
         #context = clients[counter].service.set_server(uriList[counter])
         #d = client.getPage(url=context.client.location(), postdata=str(context.envelope), 
@@ -63,12 +65,16 @@ def main(argv):
         # Add replicas
         for uri in uriList:
             if uri.find(uriList[counter]) == -1:
-                print "replica: ", uri
+                logging.debug('replica: %s', uri)
                 clients[counter].service.add_replica(uri)
         
         
-    print "starting queries..."
+    logging.debug('starting queries...')
     print clients[0].service.get('key1')
+    #context = clients[0].service.put('key1', 'fee')
+    #d = client.getPage(url=context.client.location(), postdata=str(context.envelope), 
+    #                   method='POST', headers=context.client.headers())
+    #print "success"
     print clients[0].service.put('key1', 'foo')
     print clients[0].service.get('key1')
     print clients[0].service.delete('key1')

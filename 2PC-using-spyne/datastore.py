@@ -1,9 +1,12 @@
-import json, os, logging, pickle
+import json
+import os
+import logging
+import pickle
 
 import transaction
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level)s: %(message)s')
+#logging.getLogger(__name__).setLevel(logging.INFO)
 
 class DataStore(object):
     
@@ -40,7 +43,7 @@ class DataStore(object):
     
     def delete_key(self, key):
         try:
-            self.uncommited.pop(key)
+            self.uncommitted.pop(key)
         except KeyError:
             print 'key not found'
     

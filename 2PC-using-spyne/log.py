@@ -1,7 +1,7 @@
 import logging, pickle
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level)s: %(message)s')
+#logging.getLogger(__name__).setLevel(logging.INFO)
 
 class Log(object):
     
@@ -26,10 +26,10 @@ class Log(object):
         # write to file
         log_file = open(self.log_path, 'w')
         pickle.dump(self.log, log_file)
-        logger.info('Add to log: %s', msg)
+        logging.info('Add to log: %s', msg)
         
     def peek(self):
-        logger.info('Latest entry in log: %s', self.log)
+        logging.info('Latest entry in log: %s', self.log)
         if len(self.log) == 0:
             return None
         else:

@@ -16,8 +16,8 @@ from replica import Replica
 
 def main(argv):
     # logging
-    logging.basicConfig(level=logging.INFO)
-    logging.getLogger('spyne.protocol.json').setLevel(logging.INFO)
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level)s: %(message)s')
+    #logging.getLogger('server').setLevel(logging.INFO)
         
     # command-line arguments
     hostname = '127.0.0.1'  
@@ -40,7 +40,7 @@ def main(argv):
     observer = log.PythonLoggingObserver('twisted')
     log.startLoggingWithObserver(observer.emit, setStdout=False)
 
-    application = Application([Replica], 'spyne.datastore.replica.1',
+    application = Application([Replica], 'spyne.datastore.replica',
                                 in_protocol=Soap11(), out_protocol=Soap11())
     #wsgi_app = WsgiApplication(application)
     
