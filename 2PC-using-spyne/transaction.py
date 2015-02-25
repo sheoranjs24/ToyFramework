@@ -47,6 +47,9 @@ class TransactionManager(object):
                 if uri.find(self.server) == -1:
                     self._replicaURIs.append(uri)
                     self._replicas.append(Client(uri, cache=NoCache()))
+        
+        # check logs in case we need recovery
+        check_logs()
     
     def set_server(self, server):
         logging.info('TM: set_server() called.')
@@ -358,3 +361,27 @@ class TransactionManager(object):
     def get_value_replica(self, key):
         logging.info('R: get_value_replica()')
         return self._datastore.get_value(key)
+    
+    def check_logs(self):
+        # check DTLog for last commit
+        last_trx = []
+        last_trx = last_trx + self._DTLog.peek()
+        if last_trx[0].find(DTLogMessage.START2PC) == 0:
+            logging.info("C: node was coordinator in last trx!")
+            #abort
+            #check redo logs
+            redo_trx = self._redoLog.peek()
+            if redo_trx[0] >= last_trx[0]:
+                self._rollback(redo_trx)
+            
+            #check undo-logs
+            self.tpc_abort()
+        elif last_trx[0].find(DTLogMessage.VOTEDYES) == 0:
+            pass
+        elif last_trx[0].find(DTLogMessage.VOTEDNO) == 0:
+            pass
+        elif last_trx[0].find(DTLogMessage.COMMIT) == 0:
+            pass
+        elif last_trx[0].find(DTLogMessage.ABORT) == 0:
+            pass
+    

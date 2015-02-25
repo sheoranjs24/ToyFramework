@@ -36,7 +36,7 @@ def main(argv):
     
     servers = []
     for line in sfile:
-        uri = 'http://' + line + ':' + port + '/?wsdl'  #'http://hostname:7789/?wsdl' 
+        uri = 'http://' + line.strip('\n') + ':' + port + '/?wsdl'  #'http://hostname:7789/?wsdl' 
         servers.append(uri)
     
     #Create clients

@@ -1,0 +1,2 @@
+node-3.spyne-test.vikelab.emulab.net
+node-4.spyne-test.vikelab.emulab.net
