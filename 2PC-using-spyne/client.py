@@ -19,11 +19,11 @@ def main(argv):
     try:
        opts, args = getopt.getopt(argv,"hU:",["uri_file="])
     except getopt.GetoptError:
-        print './server.py -U <uri_file>'
+        print './client.py -U <uri_file>'
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print './server.py -U <uri_file>'
+            print './client.py -U <uri_file>'
             sys.exit()
         elif opt in ("-U", "--uri_file"):
             uriFilePath = arg

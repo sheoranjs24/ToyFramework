@@ -14,11 +14,11 @@ def main(argv):
     try:
        opts, args = getopt.getopt(argv,"hP:F:",["port=", "serverFile="])
     except getopt.GetoptError:
-        print './server.py -P <port>'
+        print './replica_config.py -P <port> -F <serverFile>'
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print './server.py -P <port>'
+            print './replica_config.py -P <port> -F <serverFile>'
             sys.exit()
         elif opt in ("-P", "--port"):
             port = arg
