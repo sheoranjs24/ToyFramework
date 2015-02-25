@@ -19,7 +19,12 @@ def main(argv):
             print './replica_config.py -P <port> -F <serverFile>'
             sys.exit()
         elif opt in ("-P", "--port"):
-            port = arg
+            if isinstance(arg, str):
+                port = int(arg)
+            elif isinstance(arg, int):
+                port = arg
+            else
+                port = arg
         elif opt in ("-F", "--serverFile="):
             serverFile = arg
     
@@ -36,7 +41,8 @@ def main(argv):
     
     servers = []
     for line in sfile:
-        uri = 'http://' + line.strip('\n') + ':' + port + '/?wsdl'  #'http://localhost:7789/?wsdl' 
+        uri = 'http://' + line.strip('\n') + ':' + str(port) + '/?wsdl'  #'http://localhost:7789/?wsdl' 
+        logging.info("replica uri: %s", uri)
         servers.append(uri)
     
     #Create a client & add replica to each server

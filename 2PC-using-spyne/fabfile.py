@@ -7,8 +7,9 @@ import logging
 # Fabric Configuration
 env.key_filename="/Volumes/JSHome/Users/sheoranjs24/.ssh/emulab_rsa"
 env.user='jsheoran'
-env.server_port = 7789
+env.server_port = '7789'
 env.home_dir = '/users/jsheoran'
+#env.always_use_pty=False
 
 # Read nodes name from the file
 env.hosts = []
@@ -19,7 +20,7 @@ try:
 except:
     logging.error('File read error: nodes.txt')
     exit()
-print "hosts: ", env.hosts
+#print "hosts: ", env.hosts
 
 # Identify server and client nodes
 servers = []
@@ -31,7 +32,7 @@ try:
 except:
     logging.error('File read error: server-nodes.txt')
     servers = env.hosts
-print "servers: ", servers
+#print "servers: ", servers
 
 try:
     nodeFile = open('client-nodes.txt', 'r')
@@ -40,7 +41,7 @@ try:
 except:
     logging.error('File read error: client-nodes.txt')
     clients = env.hosts
-print "clients: ", clients
+#print "clients: ", clients
 
 # define roles
 env.roledefs.update({
@@ -77,18 +78,18 @@ def config_homedir():
 def start_servers():
     with hide('warnings'), settings(warn_only=True):
         put('start_server.sh', mode=0755)
-        run("/bin/bash %s/start_server.sh -P %d" % (env.home_dir, env.server_port))
+        run("/bin/bash %s/start_server.sh %s " % (env.home_dir, env.server_port), pty=False)
 
 @roles('configServer')
 def connect_replicas():
      with hide('warnings'), settings(warn_only=True):
         put('replica_config.py', mode=0755)
         serverFile = env.home_dir + '/ToyFramework/2PC-using-spyne/server-nodes.txt'
-        run("python %s/replica_config.py -P %d -F %s" % (env.home_dir, env.server_port, serverFile))
+        run("python %s/replica_config.py -P %s -F %s " % (env.home_dir, env.server_port, serverFile))
 
 @roles('client')
 @parallel
 def start_clients():
     with hide('warnings'), settings(warn_only=True):
         put('start_client.sh', mode=0755)
-        run("/bin/bash %s/start_client.sh -P %d" % (env.home_dir, env.server_port))
+        run("/bin/bash %s/start_client.sh %s" % (env.home_dir, env.server_port), pty=False)

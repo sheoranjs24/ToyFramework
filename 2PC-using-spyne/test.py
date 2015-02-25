@@ -19,7 +19,12 @@ def main(argv):
             print './test.py -P <port> -F <serverFile>'
             sys.exit()
         elif opt in ("-P", "--port"):
-            port = int(arg)
+            if isinstance(arg, str):
+                port = int(arg)
+            elif isinstance(arg, int):
+                port = arg
+            else
+                port = arg
         elif opt in ("-U", "--serverFile="):
             serverFile = arg
     
@@ -36,7 +41,7 @@ def main(argv):
     
     servers = []
     for line in sfile:
-        uri = 'http://' + line.strip('\n') + ':' + port + '/?wsdl'  #'http://hostname:7789/?wsdl' 
+        uri = 'http://' + line.strip('\n') + ':' + str(port) + '/?wsdl'  #'http://hostname:7789/?wsdl' 
         servers.append(uri)
     
     #Create clients
