@@ -24,11 +24,14 @@ except:
 
 # Identify server and client nodes
 servers = []
+serverPorts = []
 clients = []
 try:
     nodeFile = open('server-nodes.txt', 'r')
     for node in nodeFile:
-        servers.append(node.strip('\n'))
+        addr = node.strip('\n').split(' ')
+        servers.append(addr[0])
+        serverPorts.append(addr[1])
 except:
     logging.error('File read error: server-nodes.txt')
     servers = env.hosts
@@ -78,18 +81,20 @@ def config_homedir():
 def start_servers():
     with hide('warnings'), settings(warn_only=True):
         put('start_server.sh', mode=0755)
-        run("/bin/bash %s/start_server.sh %s " % (env.home_dir, env.server_port), pty=False)
+        index = env.hosts.index(env.host)
+        port = serverPorts[index]
+        run("/bin/bash %s/start_server.sh -P %s" % (env.home_dir, str(port)), pty=False)
 
 @roles('configServer')
 def connect_replicas():
      with hide('warnings'), settings(warn_only=True):
         put('replica_config.py', mode=0755)
         serverFile = env.home_dir + '/ToyFramework/2PC-using-spyne/server-nodes.txt'
-        run("python %s/replica_config.py -P %s -F %s " % (env.home_dir, env.server_port, serverFile))
+        run("python %s/replica_config.py -F %s" % (env.home_dir, serverFile))
 
 @roles('client')
 @parallel
 def start_clients():
     with hide('warnings'), settings(warn_only=True):
         put('start_client.sh', mode=0755)
-        run("/bin/bash %s/start_client.sh %s" % (env.home_dir, env.server_port), pty=False)
+        run("/bin/bash %s/start_client.sh" % (env.home_dir), pty=False)

@@ -20,8 +20,8 @@ def main(argv):
     logging.getLogger('server').setLevel(logging.INFO)
         
     # command-line arguments
-    hostname = '127.0.0.1'  
-    port = 7789
+    hostname = '127.0.0.1' 
+    port = 7788
     try:
        opts, args = getopt.getopt(argv,"hH:P:",["host=","port="])
     except getopt.GetoptError:

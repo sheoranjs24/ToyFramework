@@ -1,2 +1,2 @@
-pc289.emulab.net
-pc301.emulab.net
+pc289.emulab.net 7790
+pc301.emulab.net 7791

@@ -7,24 +7,16 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 def main(argv):
     
     # Command-line arguments
-    port = 7789
     serverFile = None
     try:
-       opts, args = getopt.getopt(argv,"hP:F:",["port=", "serverFile="])
+       opts, args = getopt.getopt(argv,"hF:",["serverFile="])
     except getopt.GetoptError:
-        print './test.py -P <port> -F <serverFile>'
+        print './test.py -F <serverFile>'
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print './test.py -P <port> -F <serverFile>'
+            print './test.py -F <serverFile>'
             sys.exit()
-        elif opt in ("-P", "--port"):
-            if isinstance(arg, str):
-                port = int(arg)
-            elif isinstance(arg, int):
-                port = arg
-            else:
-                port = arg
         elif opt in ("-U", "--serverFile="):
             serverFile = arg
     
@@ -41,7 +33,8 @@ def main(argv):
     
     servers = []
     for line in sfile:
-        uri = 'http://' + line.strip('\n') + ':' + str(port) + '/?wsdl'  #'http://hostname:7789/?wsdl' 
+        addr = line.strip('\n').split(' ')
+        uri = 'http://' + addr[0] + ':' + addr[1] + '/?wsdl'  #'http://hostname:7789/?wsdl' 
         servers.append(uri)
     
     #Create clients
