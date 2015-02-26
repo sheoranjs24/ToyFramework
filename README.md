@@ -14,8 +14,8 @@ Prashant Chhabra
 - Analysis and tests  
 
 ## Requirements
-1. Access to EmuLab experiment(www.emulab.net). 
-2. Ubuntu 14.04 OS on EmuLab nodes.
+1. Access to EmuLab experiment (www.emulab.net). 
+2. Ubuntu 14.04 OS on EmuLab nodes. Refer Evaluation/EmuLabExperiment.ns for a sample ns file.
 
 ## Steps to run the code:
 1. Environment setup:
@@ -24,7 +24,7 @@ Prashant Chhabra
  - Install fabric: `$ pip install fabric`     
 2. Configuration:
  - Create a file 'nodes.txt' containing a list of all the nodes address (hostname or ipaddress). 
- - Optionally create server-nodes.txt and client-nodes.txt contain list of server and client nodes respectively.
+ - Create server-nodes.txt and client-nodes.txt contain list of server and client nodes respectively.
  - Configure user, server_port and key_filename in fabfile.py.  [Note: fabfile is configured to work with EmuLab. Change the config to work with other systems]
  - Note: Script files (.sh) used in fabfile.py assumes Ubuntu 14.04. If your OS is different, please make relevant changes to the script files.
 3. Execute the program:
