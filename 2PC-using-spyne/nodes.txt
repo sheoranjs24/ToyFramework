@@ -1,4 +1,4 @@
-node-1.spyne-test.vikelab.emulab.net
-node-2.spyne-test.vikelab.emulab.net
-node-3.spyne-test.vikelab.emulab.net
-node-4.spyne-test.vikelab.emulab.net
+pc289.emulab.net
+pc301.emulab.net
+pc307.emulab.net
+pc309.emulab.net
