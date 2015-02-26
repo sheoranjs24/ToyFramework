@@ -23,7 +23,7 @@ def main(argv):
                 port = int(arg)
             elif isinstance(arg, int):
                 port = arg
-            else
+            else:
                 port = arg
         elif opt in ("-U", "--serverFile="):
             serverFile = arg

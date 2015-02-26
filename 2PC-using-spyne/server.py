@@ -38,7 +38,7 @@ def main(argv):
                 port = int(arg)
             elif isinstance(arg, int):
                 port = arg
-            else
+            else:
                 port = arg
     
     # Initialize the application
