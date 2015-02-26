@@ -161,6 +161,8 @@ class TransactionManager(object):
             logging.info('R: trx is finished.')
             self.tpc_finish()
             return True
+        elif self.currTransactionIndex > int(msg['operation'][0]):
+            return True
         else:
             logging.info('R: Wrong trx id in msg:')
             return False
@@ -190,6 +192,8 @@ class TransactionManager(object):
             #self._replicas[index].service.tpc_ack(str(ack_msg)) 
             logging.info('R: trx is finished')
             self.tpc_finish() 
+            return True
+        elif self.currTransactionIndex > int(msg['operation'][0]):
             return True
         else:
             logging.info('R: Wrong trx id in msg.')
@@ -384,12 +388,19 @@ class TransactionManager(object):
             undo_trx = self._undoLog.peek()
             if undo_trx[0] >= last_trx[0]:
                 self.tpc_abort()
+                
         # voted YES
         elif last_trx[0].find(DTLogMessage.VOTEDYES) == 0:
+            # ask coordinator the result
             pass
+        
         # voted NO
         elif last_trx[0].find(DTLogMessage.VOTEDNO) == 0:
-            pass
+            # check undo-logs and rollback
+            undo_trx = self._undoLog.peek()
+            if undo_trx[0] >= last_trx[0]:
+                self.tpc_abort_replica(undo_trx[0])
+                
         # committed
         elif last_trx[0].find(DTLogMessage.COMMIT) == 0:
             # send commit msg to replicas
@@ -401,9 +412,10 @@ class TransactionManager(object):
             self._acks = []
             logging.info('C: sending ROLLBACK to replicas')
             for replica in self._replicas:
-                replica.service.tpc_abort_replica(str(msg))
+                replica.service.tpc_commit_replica(str(msg))
             logging.info('C: waiting for ACKs.')
             self.tpc_finish()
+            
         # aborted
         elif last_trx[0].find(DTLogMessage.ABORT) == 0:
             # send abort message to nodes
@@ -419,3 +431,5 @@ class TransactionManager(object):
             logging.info('C: waiting for ACKs.')
             self.tpc_finish()
     
+    def _rollback(self, trx):
+        pass

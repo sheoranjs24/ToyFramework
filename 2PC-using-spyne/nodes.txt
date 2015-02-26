@@ -1,4 +1,4 @@
-pc289.emulab.net
+pc297.emulab.net
 pc301.emulab.net
-pc307.emulab.net
-pc309.emulab.net
+pc304.emulab.net
+pc314.emulab.net
