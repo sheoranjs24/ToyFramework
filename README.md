@@ -34,3 +34,26 @@ Prashant Chhabra
  - Create connection between servers: `$ fab connect_replicas`
  - Start client(s): `$ fab start_clients`   
  - [Note: Clients will run in parallel on each client node]   
+
+## Structure of the code
+1. **Framework** (code available in Interface folder)    
+2. **Two-Phase Commit implementation using RPC** (code available in 2PC-using-spyne folder)
+A server Replica consists of Transaction Manager. Transaction Manager connects to Resource Manager (key-value datastore). A server communicates to its replicas using RPC calls over HTTP (transport protocol) with SOAP (information exchange protocol). A client can connected to any of the server using the server address (hostname or public ip address) and the port number.
+ 1. Two-Phase Commit Implementation: Transaction Manager (TM) is responsible for handling 2PC commit protocol. TM is exposed to client and its replicas using Replica class RPC methods. Each put() or delete() request from the client is treated as atomic transaction. TM also maintains 3 logs - Undo log, Redo log and TM log. Each log entry contains the transaction id. Whenever Server is restarted, it checks the logs to see if there is any unfinished transaction and rollbacks to last consistent state. All logs are saved in files in non-volatile memory (e.g. hard-disk).
+ 2. RPC communication betwwen Replicas: We used Spyne package to implement RPC communication between the replicas. SOAP protocol is used as information exchange protocol. To communicate with a replica, server act as a client and vice-versa. Most of the RPC calls are synchronous (i.e. client waits for a certain amount of time for the results).
+ 3. Data-store: All uncommitted data is stored in volatile memory (put() and delete() methods). When a commit is made, the data is saved to a file in hard-disk. 
+ 4. Client: A client first connects to the server and asks for WSDL file. It then calls server methods using client.service.method_name().
+
+## Testcases
+- Clients waits for a certain timeout time, before throwing exception that they are unable to get response or connect to the server.
+- TM maintains logs for each transaction which can be used for recovery.
+
+
+## Future Scope
+- As the logs are maintained, new replicas can be added any time and can be made up-to-date using the logs. In future, we would like to explore this scenario.
+- Consider 2PC optimizations.
+- Authentication and security
+
+## Project #2
+Test consensus protocol(s) using our test framework.
+ 
