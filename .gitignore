@@ -3,5 +3,5 @@
 .pydevproject
 
 # Binary files
-.pyc
+*.pyc
 .pkl
