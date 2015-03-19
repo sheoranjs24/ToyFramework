@@ -1,7 +1,10 @@
 # Eclipse Project Files
 .project
 .pydevproject
+.settings
+.checkstyle
 
 # Binary files
 *.pyc
 .pkl
+*.pkl
