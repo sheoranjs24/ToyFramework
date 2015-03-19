@@ -1,5 +1,7 @@
 import logging
 
+from datastore import Database
+
 '''
 TODOs:
   ADD recovery logs
@@ -12,7 +14,7 @@ class TwoPhaseCommit(Object):
   ''' Implements Transaction Manager for Two Phase Commit (2PC) '''
   
   def __init__(self):
-    self._datastore = DataStore()
+    self._datastore = Database()
     self._prevTransactionIndex = 0
     self.currTransactionIndex = None
     self._replicaResponses = []
