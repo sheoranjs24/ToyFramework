@@ -11,13 +11,23 @@ TODOs:
   ADD documentation comments
 '''
 class TPCMessage:
-    VOTEREQ = "Vote Request"
-    VOTEYES = "Vote Yes"  
-    VOTENO = "Vote No"  
-    COMMIT = "Commit"  
-    ROLLBACK = "Rollback"
-    ACKNOWLEDGEMENT = "Acknowledgement"
-    DECISIONREQ = "Decision Request"
+  VOTEREQ = "Vote Request"
+  VOTEYES = "Vote Yes"  
+  VOTENO = "Vote No"  
+  COMMIT = "Commit"  
+  ROLLBACK = "Rollback"
+  ACKNOWLEDGEMENT = "Acknowledgement"
+  DECISIONREQ = "Decision Request"
+  
+class TPCLog:
+  START = "Start-2PC"
+  FINISH = "Finish-2PC"
+  YES = "Voted-Yes"
+  NO = "Voted-No"
+  COMMIT = "DT-Commit"
+  ROLLBACK = "DT-Rollback"
+  UPDATE = "Update-local"
+  ABORT = "Abort-local"
     
 class TwoPhaseCommit(Object):
   ''' Implements Transaction Manager for Two Phase Commit (2PC) '''
