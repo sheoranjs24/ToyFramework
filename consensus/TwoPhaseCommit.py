@@ -4,12 +4,21 @@ from datastore import Database
 
 '''
 TODOs:
-  ADD recovery logs
+  ADD logs for recovery
+  ADD recovery code
   ADD exceptions
   ADD logging 
   ADD documentation comments
 '''
-
+class TPCMessage:
+    VOTEREQ = "Vote Request"
+    VOTEYES = "Vote Yes"  
+    VOTENO = "Vote No"  
+    COMMIT = "Commit"  
+    ROLLBACK = "Rollback"
+    ACKNOWLEDGEMENT = "Acknowledgement"
+    DECISIONREQ = "Decision Request"
+    
 class TwoPhaseCommit(Object):
   ''' Implements Transaction Manager for Two Phase Commit (2PC) '''
   
@@ -58,7 +67,7 @@ class TwoPhaseCommit(Object):
       interface.sendMessage(ep, {'sender': self.coordinator,
                                  'coordinator': self.coordinator, 
                                  'type': 'msg', 
-                                 'message': 'VOTE-REQ',
+                                 'message': TPCMessage.VOTEREQ,
                                  'transaction_id': self.currTransactionIndex, 
                                  'operation': 'setValue', 
                                  'key': key, 
@@ -80,7 +89,7 @@ class TwoPhaseCommit(Object):
         interface.sendMessage(ep, {'sender': self.coordinator,
                                    'coordinator': self.coordinator, 
                                    'type': 'msg', 
-                                   'message': 'COMMIT',
+                                   'message': TPCMessage.COMMIT,
                                    'transaction_id': msg['transaction_id']
                                    }
                                 )
@@ -91,7 +100,7 @@ class TwoPhaseCommit(Object):
       interface.sendMessage(self.coordinator, {'sender': interface.master,
                                    'coordinator': self.coordinator, 
                                    'type': 'msg', 
-                                   'message': 'ACK',
+                                   'message': TPCMessage.ACKNOWLEDGEMENT,
                                    'transaction_id': msg['transaction_id']
                                    }
                             )
@@ -110,7 +119,7 @@ class TwoPhaseCommit(Object):
         interface.sendMessage(ep, {'sender': self.coordinator,
                                    'coordinator': self.coordinator, 
                                    'type': 'msg', 
-                                   'message': 'ROLLBACK',
+                                   'message': TPCMessage.ROLLBACK,
                                    'transaction_id': msg['transaction_id']
                                    }
                                 )
@@ -121,7 +130,7 @@ class TwoPhaseCommit(Object):
       interface.sendMessage(self.coordinator, {'sender': interface.master,
                                    'coordinator': self.coordinator, 
                                    'type': 'msg', 
-                                   'message': 'ACK',
+                                   'message': TPCMessage.ACKNOWLEDGEMENT,
                                    'transaction_id': msg['transaction_id']
                                    }
                             )
@@ -139,7 +148,7 @@ class TwoPhaseCommit(Object):
           interface.sendMessage(msg['coordinator'], {'sender': interface.master,
                                                      'coordinator': msg['coordinator'], 
                                                      'type': 'msg', 
-                                                     'message': 'VOTE-NO',
+                                                     'message': TPCMessage.VOTENO,
                                                      'transaction_id': msg['transaction_id']
                                                      }
                                 )
@@ -153,7 +162,7 @@ class TwoPhaseCommit(Object):
           interface.sendMessage(msg['coordinator'], {'sender': interface.master,
                                                      'coordinator': msg['coordinator'], 
                                                      'type': 'msg', 
-                                                     'message': 'VOTE-YES',
+                                                     'message': TPCMessage.VOTEYES,
                                                      'transaction_id': self.currTransactionIndex
                                                      }
                                 )
@@ -163,7 +172,7 @@ class TwoPhaseCommit(Object):
         interface.sendMessage(msg['coordinator'], {'sender': interface.master,
                                                    'coordinator': msg['coordinator'], 
                                                    'type': 'msg', 
-                                                   'message': 'VOTE-NO',
+                                                   'message': TPCMessage.VOTENO,
                                                    'transaction_id': self.currTransactionIndex
                                                    }
                               )
@@ -225,31 +234,31 @@ class TwoPhaseCommit(Object):
       return
     
     if 'message' in msg.keys():
-      if msg['message'] == 'VOTE-REQ':
+      if msg['message'] == TPCMessage.VOTEREQ:
         print('VOTE-REQ received by ...')
         handle_vote_request(msg)
         
-      elif msg['message'] == 'COMMIT':
+      elif msg['message'] == TPCMessage.COMMIT:
         print('COMMIT received by ...')
         tpc_commit(msg)
         
-      elif msg['message'] == 'ROLLBACK':
+      elif msg['message'] == TPCMessage.ROLLBACK:
         print('ROLLBACK received by ...')
         tpc_rollback(msg)
         
-      elif msg['message'] == 'YES':
+      elif msg['message'] == TPCMessage.VOTEYES:
         print('YES received by ...')
         handle_vote_yes(msg)
         
-      elif msg['message'] == 'NO':
+      elif msg['message'] == TPCMessage.VOTENO:
         print('NO received by ...')
         handle_vote_no(msg)
         
-      elif msg['message'] == 'ACK':
+      elif msg['message'] == TPCMessage.ACKNOWLEDGEMENT:
         print('ACK received by ...')
         handle_ack(msg)
         
-      elif msg['message'] == 'DECISION-REQ':
+      elif msg['message'] == TPCMessage.DECISIONREQ:
         print('DECISION-REQ received by ...')
         handle_decision_request(msg)
         
