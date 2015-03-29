@@ -2,7 +2,12 @@ class Default(object):
   def __init__(self):
     self.d = {}
   
+  def start(self, interface):
+    for i in range(0, interface.get_log_count()):
+      print interface.get_log(i)
+
   def setValue(self, key, value, interface):
+    interface.write_log({'key':key, 'value':value})
     self.d[key] = value
     nodes = interface.get_endpoints() #get total numver of endpoints
     for ep in range(1, nodes):
