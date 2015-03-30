@@ -22,8 +22,8 @@ class TPCMessage:
 class TwoPhaseCommit(object):
   ''' Implements Transaction Manager for Two Phase Commit (2PC) '''
   
-  def __init__(self):
-    self._datastore = Database()
+  def __init__(self, db_name=None):
+    self._datastore = Database(db_name)
     self._prevTransactionIndex = 0
     self.currTransactionIndex = None
     self._replicaResponses = []
