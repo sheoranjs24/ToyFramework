@@ -4,7 +4,7 @@ class Default(object):
   
   def start(self, interface):
     for i in range(0, interface.get_log_count()):
-      print interface.get_log(i)
+      self.d[interface.get_log(i)['key']] = interface.get_log(i)['value']
 
   def setValue(self, key, value, interface):
     interface.write_log({'key':key, 'value':value})

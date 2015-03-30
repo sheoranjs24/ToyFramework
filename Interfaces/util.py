@@ -56,8 +56,13 @@ class Framework(DatagramProtocol):
         if tuple(ep) not in self.endpoints:
           self.endpoints.append(tuple(ep))
     elif data['type'] == 'msg':
-      self.al.gotMessage(data, self)
+      self.al.gotMessage(data['data'], self)
   
+  # delayed function
+  def callLater(self, secondsFromNow, callable, *args, **kw):
+    from twisted.internet import reactor
+    reactor.callLater(secondsFromNow, callable, *args, **kw)
+
   # append an object to log
   def write_log(self, data):
     try:
@@ -84,8 +89,8 @@ class Framework(DatagramProtocol):
     return len(self.endpoints)
 
   def sendMessage(self, endpoint, data):
-    data['type'] = 'msg'
-    self.send(self.endpoints[endpoint], data);
+    packet = {'type': 'msg', 'data': data}
+    self.send(self.endpoints[endpoint], packet);
 
   def setAlgorithm(self, al):
     self.al = al
