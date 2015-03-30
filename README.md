@@ -66,8 +66,8 @@ A server Replica consists of Transaction Manager. Transaction Manager connects t
 - Start a client that connect to one of the instance:
  - python client.py 127.0.0.1:6000
 - Under the client you can use folling command to interact with the framework instance
- - get <key>
- - set <key> <value>
+ - get &lt;key&gt;
+ - set &lt;key&gt; &lt;value&gt;
  - exit
 - You can check the console that runs the framework instance to see the even logging and the log file you specified for protocol related storages.
 
