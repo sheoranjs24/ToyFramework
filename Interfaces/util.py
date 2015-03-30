@@ -1,5 +1,5 @@
 from twisted.internet.protocol import DatagramProtocol
-import json
+import json, time
 
 class Framework(DatagramProtocol):
 
@@ -14,7 +14,8 @@ class Framework(DatagramProtocol):
     self.listen_host, self.listen_port = local
     self.logfile = logfile
     self.log = []
-
+    self.time = {} 
+   
   #called by twisted when reactor starts
   def startProtocol(self):
     if self.master and self.master[0] and self.master[1]:
@@ -38,7 +39,6 @@ class Framework(DatagramProtocol):
     except:
       return
 
-    print data
     if data['type'] == 'init':
       if addr not in self.endpoints:
         self.endpoints.append(addr)
@@ -56,6 +56,8 @@ class Framework(DatagramProtocol):
         if tuple(ep) not in self.endpoints:
           self.endpoints.append(tuple(ep))
     elif data['type'] == 'msg':
+      print '[%.3f] receive from (%s:%s): %s' % (time.time(), addr[0], addr[1],
+                                                 json.dumps(data['data']))
       self.al.gotMessage(data['data'], self)
   
   # delayed function
@@ -90,6 +92,10 @@ class Framework(DatagramProtocol):
 
   def sendMessage(self, endpoint, data):
     packet = {'type': 'msg', 'data': data}
+    print '[%.3f] send to (%s:%s): %s' % (time.time(),
+                                          self.endpoints[endpoint][0],
+                                          self.endpoints[endpoint][1],
+                                          json.dumps(data))
     self.send(self.endpoints[endpoint], packet);
 
   def setAlgorithm(self, al):
