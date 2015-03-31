@@ -1,7 +1,7 @@
 import logging
 
 from dictionary.datastore import Database
-from Carbon.AppleEvents import ePageDownKey
+from collections import defaultdict
 
 '''
 TODOs:
@@ -11,14 +11,24 @@ TODOs:
   ADD logging 
   ADD documentation comments
 '''
+class TCPLog:
+  START = 1
+  FINISH = 2
+  COMMIT = 3
+  ROLLBACK = 4
+  VOTEYES = 5
+  VOTENO = 6
+  UPDATE = 7
+  ABORT = 8
+
 class TPCMessage:
-    VOTEREQ = "Vote Request"
-    VOTEYES = "Vote Yes"  
-    VOTENO = "Vote No"  
-    COMMIT = "Commit"  
-    ROLLBACK = "Rollback"
-    ACKNOWLEDGEMENT = "Acknowledgement"
-    DECISIONREQ = "Decision Request"
+  VOTEREQ = "Vote Request"
+  VOTEYES = "Vote Yes"  
+  VOTENO = "Vote No"  
+  COMMIT = "Commit"  
+  ROLLBACK = "Rollback"
+  ACKNOWLEDGEMENT = "Acknowledgement"
+  DECISIONREQ = "Decision Request"
     
 class TwoPhaseCommit(object):
   ''' Implements Transaction Manager for Two Phase Commit (2PC) '''
@@ -35,12 +45,6 @@ class TwoPhaseCommit(object):
   def start(self, interface):
     print 'endpoints:', interface.get_endpoints()
     self.server = (interface.listen_host, interface.listen_port)
-    
-    for i in range(0, interface.get_log_count()):
-      key = interface.get_log(i)['key']
-      value = interface.get_log(i)['value']
-      self._datastore.set_value(key, value)
-    self._datastore.commit()
       
   def getValue(self, key, interface):
     ''' Return a value from the database '''
@@ -55,9 +59,15 @@ class TwoPhaseCommit(object):
       self.currTransactionIndex = self._prevTransactionIndex + 1
       return True
   
-  def tpc_finish(self):
+  def tpc_finish(self, interface):
     ''' Close existing transaction '''
     logging.info('TM: Transaction complete: %d', self.currTransactionIndex)
+    interface.write_log({'time': int(time.time()),
+                         'trx_id' : self.currTransactionIndex,
+                         'type' : TCPLog.FINISH,
+                         'coordinator': self.coordinator,
+                         'participants': interface.endpoints,
+                         })
     self._prevTransactionIndex += 1
     self.currTransactionIndex = None
     self.coordinator = None
@@ -73,6 +83,18 @@ class TwoPhaseCommit(object):
       logging.info('TM: Another transaction is already in process.')
       return False  
     self._datastore.set_value(key, value)
+    
+    # write to log
+    oldValue = self._datastore.get(key)
+    interface.write_log({'time': int(time.time()),
+                         'trx_id' : self.currTransactionIndex,
+                         'type' : TCPLog.START,
+                         'coordinator': self.coordinator,
+                         'participants': interface.endpoints,
+                         'operation': 'set',
+                         'olddata': {'key': key,'value': oldValue,},
+                         'newdata' : {'key': key, 'value': value,}
+                         })
     
     # Send 'VOTE-REQ' to participants
     self.coordinator = self.server
@@ -94,7 +116,21 @@ class TwoPhaseCommit(object):
   def tpc_commit(self, msg, interface):
     ''' Commit the transaction '''
     # commit transaction
+    interface.write_log({'time': int(time.time()),
+                         'trx_id' : self.currTransactionIndex,
+                         'type' : TCPLog.UPDATE,
+                         'coordinator': self.coordinator,
+                         'participants': interface.endpoints
+                         })
     self._datastore.commit()
+    
+    # write to log
+    interface.write_log({'time': int(time.time()),
+                         'trx_id' : self.currTransactionIndex,
+                         'type' : TCPLog.COMMIT,
+                         'coordinator': self.coordinator,
+                         'participants': interface.endpoints
+                         })
     
     # send message
     if self.coordinator == self.server:
@@ -110,7 +146,7 @@ class TwoPhaseCommit(object):
                                 )
       logging.info('TM: waiting for acknowledgments...')
     else:
-      self.tpc_finish()    
+      self.tpc_finish(interface)    
       # Find coordinator index
       receiver = None
       for ep in range(1, interface.get_endpoints()):
@@ -130,7 +166,21 @@ class TwoPhaseCommit(object):
   def tpc_rollback(self, msg, interface):
     ''' Rollback the transaction '''
     # abort transaction
+    interface.write_log({'time': int(time.time()),
+                         'trx_id' : self.currTransactionIndex,
+                         'type' : TCPLog.ABORT,
+                         'coordinator': self.coordinator,
+                         'participants': interface.endpoints
+                         })
     self._datastore.abort()
+    
+    # write to log
+    interface.write_log({'time': int(time.time()),
+                         'trx_id' : self.currTransactionIndex,
+                         'type' : TCPLog.ROLLBACK,
+                         'coordinator': self.coordinator,
+                         'participants': interface.endpoints
+                         })
     
     # send message
     if self.coordinator == self.server:
@@ -146,7 +196,7 @@ class TwoPhaseCommit(object):
                                 )
       logging.info('TM: waiting for acknowledgments...')
     else:
-      self.tpc_finish()     
+      self.tpc_finish(interface)     
       # Find coordinator index
       receiver = None
       for ep in range(1, interface.get_endpoints()):
@@ -171,6 +221,14 @@ class TwoPhaseCommit(object):
           return
         elif self._prevTransactionIndex+1 < msg['transaction_id']:
           print('Transaction id is much higher than previous.')
+          # Write to log
+          interface.write_log({'time': int(time.time()),
+                               'trx_id' : self.currTransactionIndex,
+                               'type' : TCPLog.VOTENO,
+                               'coordinator': self.coordinator,
+                               'participants': interface.endpoints
+                               })
+          
           # Find coordinator index
           receiver = None
           for ep in range(1, interface.get_endpoints()):
@@ -192,6 +250,15 @@ class TwoPhaseCommit(object):
           self._datastore.set_value(msg['key'], msg['value'])
           self.coordinator = msg['coordinator']
           print 'coordinator: ', self.coordinator
+          
+          # Write to log
+          interface.write_log({'time': int(time.time()),
+                               'trx_id' : self.currTransactionIndex,
+                               'type' : TCPLog.VOTEYES,
+                               'coordinator': self.coordinator,
+                               'participants': interface.endpoints
+                               })
+          
           # Find coordinator index
           receiver = None
           for ep in range(1, interface.get_endpoints()):
@@ -208,6 +275,14 @@ class TwoPhaseCommit(object):
                                 )
       else:
         print('Another transaction already in process.')
+        # Write to log
+        interface.write_log({'time': int(time.time()),
+                             'trx_id' : self.currTransactionIndex,
+                             'type' : TCPLog.VOTENO,
+                             'coordinator': self.coordinator,
+                             'participants': interface.endpoints
+                             })
+          
         # Find coordinator index
         receiver = None
         for ep in range(1, interface.get_endpoints()):
@@ -261,7 +336,7 @@ class TwoPhaseCommit(object):
       # Check if all acknowledgments are received
       if len(self._replicaResponses) == (interface.get_endpoints() - 1):
         self._replicaResponses = []
-        self.tpc_finish()
+        self.tpc_finish(interface)
     else:
       print('Duplicate ACK received for transaction: %d', msg['transaction_id'])
       return
