@@ -8,5 +8,5 @@
 *.pyc
 .pkl
 *.pkl
-.db
-.log
+*.db
+*.log

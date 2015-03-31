@@ -270,7 +270,7 @@ class TwoPhaseCommit(object):
                          'participants': interface.endpoints
                          })
   
-    # send ROLLBACK message
+    # send message
     nodes = interface.get_endpoints() 
     for ep in range(1, nodes):
       interface.sendMessage(ep, {'sender': self.coordinator,
@@ -281,7 +281,23 @@ class TwoPhaseCommit(object):
                                  }
                               )
     logging.info('TM: waiting for acknowledgments...')
-    
+
+  def send_decision_to_one(self, receiver, trx_id, decision, interface):
+    # Find receiver index
+    index = None
+    for ep in range(1, interface.get_endpoints()):
+      if receiver == list(interface.endpoints[ep]):
+        index = ep 
+        break
+      
+    interface.sendMessage(ep, {'sender': self.coordinator,
+                               'coordinator': self.coordinator, 
+                               'type': 'msg', 
+                               'message': decision,
+                               'transaction_id': trx_id,
+                               }
+                          )
+        
   def send_vote(self, vote, interface):
     # Find coordinator index
     receiver = None
@@ -398,7 +414,47 @@ class TwoPhaseCommit(object):
   
   def handle_decision_request(self, msg, interface):
     ''' Return decision of an old transaction '''
-  
+    # if current trx check the status
+    if msg['transaction_id'] == self.currTransactionIndex:
+      log_index = interface.get_log_count() - 1
+      log = interface.get_log(log_index)
+      
+      if log['type'] == TPCLog.START:
+        print('No decision is made as of yet.')
+        return
+      elif log['type'] == TPCLog.UPDATE or \
+        log['type'] == TPCLog.ABORT:
+        print('Decision made and not disclosed yet.')
+        return
+      elif log['type'] == TPCLog.COMMIT or \
+        log['type'] == TPCLog.ROLLBACK:
+        self.send_decision_to_one(msg['sender'], self.currTransactionIndex, log['type'], interface)
+        
+    elif msg['transaction_id'] < self.currTransactionIndex:
+      # rollback log until the trx_id is found : 4 messages
+      offset = 0
+      if log['type'] == TPCLog.START:
+        offset = 2
+      elif log['type'] == TPCLog.UPDATE or \
+        log['type'] == TPCLog.ABORT:
+        offset = 3
+      elif log['type'] == TPCLog.COMMIT or \
+        log['type'] == TPCLog.ROLLBACK:
+        offset = 4     
+      index = log_index - ((self.currTransactionIndex - msg['transaction_id'] - 1) * 4) - offset
+      
+      _log = interface.get_log(index)
+      if _log['type'] == TPCLog.COMMIT or \
+        _log['type'] == TPCLog.ROLLBACK:
+        print('log found')
+        self.send_decision_to_one(msg['sender'], self.currTransactionIndex, _log['type'], interface)
+      else:
+        print('Wrong log read. type: %s' % _log['type'])
+        
+    else:
+      print('Trx id is higher than the coordinator.')
+      return
+    
   def send_decision_request(self, interface):
     ''' Send Decision Request to Coordinator '''
     # Find coordinator index
