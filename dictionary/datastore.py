@@ -39,6 +39,12 @@ class Database(object):
     except KeyError:
       print('key not found')
 
+  def is_key(self, key):
+    if key in self.uncommitted.keys():
+      return True
+    else:
+      return False
+    
   def get_keys(self):
     return self.uncommitted.keys()
 
