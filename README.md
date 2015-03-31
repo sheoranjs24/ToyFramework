@@ -58,6 +58,16 @@ A server Replica consists of Transaction Manager. Transaction Manager connects t
 - Consider 2PC optimizations.
 - Authentication and security
 
-## Project #2
-Test consensus protocol(s) using our test framework.
- 
+## Running the framework alone
+- Go to Interface/ folder, start a framework instance:
+ - python node.py 127.0.0.1:5000 --logfile 1.log
+- Start another instance, connecting to the first one:
+ - python node.py 127.0.0.1:6000 --logfile 2.log --connect 127.0.0.1:5000
+- Start a client that connect to one of the instance:
+ - python client.py 127.0.0.1:6000
+- Under the client you can use folling command to interact with the framework instance
+ - get &lt;key&gt;
+ - set &lt;key&gt; &lt;value&gt;
+ - exit
+- You can check the console that runs the framework instance to see the even logging and the log file you specified for protocol related storages.
+

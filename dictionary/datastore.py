@@ -1,4 +1,4 @@
-import pickle
+import json, os, logging, pickle
 
 class Database(object):
     
@@ -30,7 +30,7 @@ class Database(object):
       return None
     return value
   
-  def put_value(self, key, value):
+  def set_value(self, key, value):
     self.uncommitted[key] = value
   
   def delete_key(self, key):
