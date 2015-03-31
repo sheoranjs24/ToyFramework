@@ -116,9 +116,9 @@ class TwoPhaseCommit(object):
       return
     
     elif log_type == TCPLog.FINISH:
-      # Last transction was successful.
+      # Last transaction was successful.
       self._prevTransactionIndex = self.currTransactionIndex
-      self.currTransactionIndex = 0
+      self.currTransactionIndex = None
       self.coordinator = None
       print('Database is up-to-date.')
       return
