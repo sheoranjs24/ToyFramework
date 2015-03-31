@@ -1,6 +1,7 @@
 from twisted.internet import reactor
 
 from util import Framework
+from consensusProtocols.TPC.TwoPhaseCommit import TwoPhaseCommit
 
 import optparse
 
@@ -19,6 +20,10 @@ This is the framework node, run like this:
   parser.add_option('--connect', type='string', help=help, default=0)
   help = "The logfile location"
   parser.add_option('--logfile', type='string', help=help, default='log.log')
+  help = "The database location"
+  parser.add_option('--db', type='string', help=help, default='database.db')
+  help = "The replica name"
+  parser.add_option('--name', type='string', help=help, default='1')
   
   option, arg = parser.parse_args()
   option.master_host = None
@@ -49,7 +54,8 @@ def main():
   protocol = Framework((opt.host, opt.port),
                        (opt.master_host, opt.master_port),
                        opt.logfile)
-  protocol.setAlgorithm(consensus.Default())
+  #protocol.setAlgorithm(consensus.Default())
+  protocol.setAlgorithm(TwoPhaseCommit(opt.name, opt.db))
   protocol.run()
 
 if __name__ == "__main__":

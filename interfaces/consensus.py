@@ -9,7 +9,7 @@ class Default(object):
   def setValue(self, key, value, interface):
     interface.write_log({'key':key, 'value':value})
     self.d[key] = value
-    nodes = interface.get_endpoints() #get total numver of endpoints
+    nodes = interface.get_endpoints() #get total number of endpoints
     for ep in range(1, nodes):
       interface.sendMessage(ep, {'key': key, 'value': value})
   
