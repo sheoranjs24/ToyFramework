@@ -5,12 +5,11 @@ from collections import defaultdict
 
 '''
 TODOs:
-  ADD logs for recovery
-  ADD recovery code
   ADD exceptions
   ADD logging 
   ADD documentation comments
 '''
+
 class TCPLog:
   START = 1
   FINISH = 2
@@ -319,11 +318,11 @@ class TwoPhaseCommit(object):
               break
           # Vote NO
           interface.sendMessage(receiver, {'sender': self.server,
-                                                     'coordinator': msg['coordinator'], 
-                                                     'type': 'msg', 
-                                                     'message': TPCMessage.VOTENO,
-                                                     'transaction_id': msg['transaction_id'],
-                                                     }
+                                           'coordinator': msg['coordinator'], 
+                                           'type': 'msg', 
+                                           'message': TPCMessage.VOTENO,
+                                           'transaction_id': msg['transaction_id'],
+                                          }
                                 )
       
         else:
@@ -349,11 +348,11 @@ class TwoPhaseCommit(object):
               break
           # Vote YES
           interface.sendMessage(receiver, {'sender': self.server,
-                                                     'coordinator': msg['coordinator'], 
-                                                     'type': 'msg', 
-                                                     'message': TPCMessage.VOTEYES,
-                                                     'transaction_id': self.currTransactionIndex,
-                                                     }
+                                           'coordinator': msg['coordinator'], 
+                                           'type': 'msg', 
+                                           'message': TPCMessage.VOTEYES,
+                                           'transaction_id': self.currTransactionIndex,
+                                           }
                                 )
       else:
         print('Another transaction already in process.')
@@ -373,11 +372,11 @@ class TwoPhaseCommit(object):
             break
         # Vote NO
         interface.sendMessage(receiver, {'sender': self.server,
-                                                   'coordinator': msg['coordinator'], 
-                                                   'type': 'msg', 
-                                                   'message': TPCMessage.VOTENO,
-                                                   'transaction_id': self.currTransactionIndex,
-                                                   }
+                                         'coordinator': msg['coordinator'], 
+                                         'type': 'msg', 
+                                         'message': TPCMessage.VOTENO,
+                                         'transaction_id': self.currTransactionIndex,
+                                         }
                               )
     else:
       print('Error: unknown operation.')
@@ -445,6 +444,7 @@ class TwoPhaseCommit(object):
                               )
       
   def gotMessage(self, msg, interface):
+    ''' Handle received messages '''
     # Check if sender exists in the replica list
     if 'sender' in msg.keys():
       replica = None
@@ -462,31 +462,31 @@ class TwoPhaseCommit(object):
     
     if 'message' in msg.keys():
       if msg['message'] == TPCMessage.VOTEREQ:
-        print('VOTE-REQ received for trx: %d.' % msg['transaction_id'])
+        logging.info('VOTE-REQ received for trx: %d.', msg['transaction_id'])
         self.handle_vote_request(msg, interface)
         
       elif msg['message'] == TPCMessage.COMMIT:
-        print('COMMIT received for trx: %d.' % msg['transaction_id'])
+        logging.info('COMMIT received for trx: %d.', msg['transaction_id'])
         self.tpc_commit(msg, interface)
         
       elif msg['message'] == TPCMessage.ROLLBACK:
-        print('ROLLBACK received for trx: %d.' % msg['transaction_id'])
+        logging.info('ROLLBACK received for trx: %d.', msg['transaction_id'])
         self.tpc_rollback(interface)
         
       elif msg['message'] == TPCMessage.VOTEYES:
-        print('YES received for trx: %d.'% msg['transaction_id'])
+        logging.info('YES received for trx: %d.', msg['transaction_id'])
         self.handle_vote_yes(msg, interface)
         
       elif msg['message'] == TPCMessage.VOTENO:
-        print('NO received for trx: %d.' % msg['transaction_id'])
+        logging.info('NO received for trx: %d.', msg['transaction_id'])
         self.handle_vote_no(msg, interface)
         
       elif msg['message'] == TPCMessage.ACKNOWLEDGEMENT:
-        print('ACK received for trx: %d.'% msg['transaction_id'])
+        logging.info('ACK received for trx: %d.', msg['transaction_id'])
         self.handle_ack(msg, interface)
         
       elif msg['message'] == TPCMessage.DECISIONREQ:
-        print('DECISION-REQ received for trx: %d.' % msg['transaction_id'])
+        logging.info('DECISION-REQ received for trx: %d.', msg['transaction_id'])
         self.handle_decision_request(msg, interface)
         
       else:
