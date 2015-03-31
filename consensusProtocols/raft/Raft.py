@@ -47,6 +47,26 @@ class RaftServer(object):
     self._server = (interface.listen_host, interface.listen_port)
     self._start_election() 
 
+  def getValue(self, key, interface):
+    ''' Return a value from the database to the client '''
+    return self._datastore.get_value(key)
+  
+  def setValue(self, key, value, interface):
+    ''' Set a value for a key in the database: request by client '''
+    if self._state == ReplicaState.Leader:
+      # add to log
+      self._datastore.set_value(key, value)
+      
+      # send append entries
+      # if success, commit & return to the client
+      # tell commitIndex to all nodes to update
+  
+  def on_follower_timeout(self, message):
+    """ Leader timeout is reached. """
+  
+  def on_candidate_timeout(self, message):
+    """ Leader timeout is reached. """
+       
   def on_leader_timeout(self, message):
     """ Leader timeout is reached. """
   
