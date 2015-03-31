@@ -1,7 +1,6 @@
 import logging
 
 from dictionary.datastore import Database
-from Carbon.AppleEvents import ePageDownKey
 
 '''
 TODOs:
