@@ -3,12 +3,6 @@ import logging, time
 from dictionary.datastore import Database
 from collections import defaultdict
 
-'''
-TODOs:
-  ADD exceptions
-  ADD logging 
-  ADD documentation comments
-'''
 
 class TCPLog:
   START = "2PC-Start"
