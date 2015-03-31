@@ -1,7 +1,6 @@
 import logging
 
 from dictionary.datastore import Database
-from Carbon.AppleEvents import ePageDownKey
 
 '''
 TODOs:
@@ -12,13 +11,13 @@ TODOs:
   ADD documentation comments
 '''
 class TPCMessage:
-    VOTEREQ = "Vote Request"
-    VOTEYES = "Vote Yes"  
-    VOTENO = "Vote No"  
-    COMMIT = "Commit"  
-    ROLLBACK = "Rollback"
-    ACKNOWLEDGEMENT = "Acknowledgement"
-    DECISIONREQ = "Decision Request"
+  VOTEREQ = "Vote Request"
+  VOTEYES = "Vote Yes"  
+  VOTENO = "Vote No"  
+  COMMIT = "Commit"  
+  ROLLBACK = "Rollback"
+  ACKNOWLEDGEMENT = "Acknowledgement"
+  DECISIONREQ = "Decision Request"
     
 class TwoPhaseCommit(object):
   ''' Implements Transaction Manager for Two Phase Commit (2PC) '''
