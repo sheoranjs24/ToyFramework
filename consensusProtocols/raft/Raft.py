@@ -2,27 +2,25 @@ import time, random
 
 from collections import defaultdict
 
-from state.follower import Follower
 
 class RaftMessage:
-   AppendEntries = 1
-   RequestVote = 2
-   RequestVoteResponse = 3
-   Response = 4
+   AppendEntries = "AppendEntries"
+   VoteRequest = "VoteRequest"
+   VoteResponse = "VoteResponse"
+   Response = "Response"
 
 class ReplicaState:
-  Follower = 1
-  Candidate = 2
-  Leader = 3
+  Follower = "Follower"
+  Candidate = "Candidate"
+  Leader = "Leader"
 
 class RaftServer(object):
 
-  def __init__(self, name=1, db_name='database', log=None, timeout=500):
+  def __init__(self, name=1, db='database.db', timeout=500):
     self._name = name
     self._server = None
     self._state = ReplicaState.Follower
-    self._log = log
-    self._datastore = Database(db_name)
+    self._datastore = Database(db)
     
     self._commitIndex = 0
     self._currentTerm = 0
@@ -33,13 +31,16 @@ class RaftServer(object):
     # Leader fields
     self._nextIndexes = defaultdict(int)
     self._matchIndex = defaultdict(int)
-        
-    self._last_vote = None # Follower field
-    self._votes = {}  # Candidate field
-   
+    
+    # Follower field
+    self._last_vote = None 
+    
+    # Candidate field
+    self._votes = {}
+    
+    # Timeout
     self._timeout = timeout
     self._timeoutTime = self._nextTimeout()
-     
   
   def start(self, interface):
     """ Start service """
@@ -47,6 +48,11 @@ class RaftServer(object):
     self._server = (interface.listen_host, interface.listen_port)
     self._start_election() 
 
+  def _nextTimeout(self):
+    self._currentTime = time.time()
+    return self._currentTime + random.randrange(self._timeout,
+                                                2 * self._timeout)
+    
   def getValue(self, key, interface):
     ''' Return a value from the database to the client '''
     return self._datastore.get_value(key)
@@ -76,7 +82,7 @@ class RaftServer(object):
     election = {'timestamp': int(time.time()),
                 'sender': self._server,
                 'receiver': None,
-                'type': RaftMessage.RequestVote,
+                'type': RaftMessage.VoteRequest,
                 'term': self._currentTerm,
                 'data': {
                          "lastLogIndex": self._lastLogIndex,
@@ -98,15 +104,15 @@ class RaftServer(object):
       
     # Send Message
     response = {'timestamp': int(time.time()),
-                      'sender': self.server,
-                      'receiver': message['sender'],
-                      'type': RaftMessage.RequestVoteResponse,
-                      'term': message['term'],
-                      'response': voteResponse
-                      }
+                'sender': self.server,
+                'receiver': message['sender'],
+                'type': RaftMessage.VoteResponse,
+                'term': message['term'],
+                'response': voteResponse
+                }
     self.send_message_to_one(response, interface)
     
-  def handle_vote_received(self, message, interface):
+  def handle_vote_response(self, message, interface):
     """ Node received a vote."""
     if message['sender'] not in self._votes:
       self._votes[message['sender']] = message
@@ -119,21 +125,6 @@ class RaftServer(object):
           node = str(interface.endpoints[ep])
           self._nextIndexes[node] = self._lastLogIndex + 1
           self._matchIndex[node] = 0
-  
-  def _send_heart_beat(self, interface):
-    message = {'timestamp': int(time.time()),
-               'server': self._server,
-               'receiver': None,
-               'type': RaftMessage.AppendEntries,
-               'term': self._currentTerm,
-               'data': {'leaderId': self._server,
-                        'prevLogIndex': self._lastLogIndex,
-                        'prevLogTerm': self._lastLogTerm,
-                        'entries': [],
-                        'leaderCommit': self._commitIndex,
-                        }
-               }
-    self.send_message(message, interface)
         
   def handle_append_entries(self, message, interface):
     """ Request to append an entry to the log. """
@@ -253,7 +244,36 @@ class RaftServer(object):
       # Are they caught up?
       if(self._nextIndexes[message['sender']] > self._lastLogIndex):
         self._nextIndexes[message['sender']] = self._lastLogIndex
-    
+  
+  def _send_heart_beat(self, interface):
+    """ Send AppendEntries message to replicas """
+    message = {'timestamp': int(time.time()),
+               'server': self._server,
+               'receiver': None,
+               'type': RaftMessage.AppendEntries,
+               'term': self._currentTerm,
+               'data': {'leaderId': self._server,
+                        'prevLogIndex': self._lastLogIndex,
+                        'prevLogTerm': self._lastLogTerm,
+                        'entries': [],
+                        'leaderCommit': self._commitIndex,
+                        }
+               }
+    self.send_message(message, interface)  
+
+  def send_message_response(self, message, interface, yes=True):
+    response = {'timestamp': int(time.time()),
+                'sender': self.server,
+                'receiver': message['sender'], 
+                'type': RaftMessage.Response,
+                'term': msg['term'], 
+                'data': {
+                         'response': yes,
+                         'currentTerm': self._currentTerm,
+                         }
+                }
+    send_message_to_one(response, interface)
+       
   def send_message_to_all(self, message, interface):
     nodes = interface.get_endpoints()
     for ep in range (1, nodes):
@@ -269,19 +289,6 @@ class RaftServer(object):
         break
     if receiver is not None:
       interface.sendMessage(receiver, message)
-    
-  def send_message_response(self, message, interface, yes=True):
-    response = {'timestamp': int(time.time()),
-                'sender': self.server,
-                'receiver': message['sender'], 
-                'type': RaftMessage.Response,
-                'term': msg['term'], 
-                'data': {
-                         'response': yes,
-                         'currentTerm': self._currentTerm,
-                         }
-                }
-    send_message_to_one(response, interface)
            
   def gotMessage(self, message, interface):
     # Check if sender exists in the replica list
@@ -310,10 +317,10 @@ class RaftServer(object):
     if 'type' in message.keys():
       if(message['type'] == RaftMessage.AppendEntries):
         self.handle_append_entries(message, interface)
-      elif(message['type'] == RaftMessage.RequestVote):
+      elif(message['type'] == RaftMessage.VoteRequest):
         self.handle_vote_request(message, interface)
-      elif(message['type'] == RaftMessage.RequestVoteResponse):
-        self.handle_vote_received(message, interface)
+      elif(message['type'] == RaftMessage.VoteResponse):
+        self.handle_vote_response(message, interface)
       elif(message['type'] == RaftMessage.Response):
         self.handle_response_received(message, interface)
       else:
@@ -323,7 +330,3 @@ class RaftServer(object):
       print('Error: No message found...')
       return
 
-  def _nextTimeout(self):
-    self._currentTime = time.time()
-    return self._currentTime + random.randrange(self._timeout,
-                                                2 * self._timeout)
