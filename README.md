@@ -70,4 +70,9 @@ A server Replica consists of Transaction Manager. Transaction Manager connects t
  - set &lt;key&gt; &lt;value&gt;
  - exit
 - You can check the console that runs the framework instance to see the even logging and the log file you specified for protocol related storages.
+- To use consensus protocols (2PC or Raft):
+ - add additional argument when firing up the replicas: --db database.db
+   `python interfaces/node.py --logfile log1.log --db database1.pkl --name 1 127.0.0.1:11122`
+ - Also, make sure that the server is started with the consensus protocol:
+   `protocol.setAlgorithm(TwoPhaseCommit(opt.name, opt.db))`
 
