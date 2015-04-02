@@ -1,4 +1,4 @@
-import time, random
+import time, random, threading
 
 from collections import defaultdict
 
@@ -42,7 +42,7 @@ class RaftServer(object):
     
     # Timeout
     self._timeout = timeout
-    self._timeoutTime = None
+    self._timer = None
   
   def start(self, interface):
     """ Start service """
@@ -59,15 +59,12 @@ class RaftServer(object):
     self._commitIndex = last_log['commitIndex']
     self._last_vote = last_log['vote']
     
-    self._timeoutTime = self._nextTimeout()
-    # remove below code once timeout is handled via event handling mechanism
-    self._state = RaftState.FOLLOWER
-    self._start_election(interface)
+    timeoutTime = self._nextTimeout()
+    self._timer = threading.Timer(timeoutTime, self.on_timeout(interface))
+    self._timer.start()
 
   def _nextTimeout(self):
-    self._currentTime = time.time()
-    return self._currentTime + random.randrange(self._timeout,
-                                                2 * self._timeout)
+    return random.randrange(self._timeout, 2 * self._timeout)
     
   def getValue(self, key, interface):
     ''' Return a value from the database to the client '''
@@ -117,7 +114,7 @@ class RaftServer(object):
       print('Unknown operation found.') 
       return
        
-  def on_timeout(self, message):
+  def on_timeout(self, interface):
     """ Timeout is reached. """
     # Check the state of the server
     if self._state == RaftState.FOLLOWER:
@@ -146,9 +143,21 @@ class RaftServer(object):
 
     self.send_message(election, interface)
     self._last_vote = self._server
+    
+    # restart the timer
+    timeoutTime = self._nextTimeout()
+    self._timer = threading.Timer(timeoutTime, self.on_timeout(interface))
+    self._timer.start()
         
   def handle_vote_request(self, message):
     """ Vote request."""
+    if self._state == RaftState.FOLLOWER:
+      # restart the timer
+      self._timer.stop()
+      timeoutTime = self._nextTimeout()
+      self._timer = threading.Timer(timeoutTime, self.on_timeout(interface))
+      self._timer.start()
+    
     self._leader = None
     reason = ''
     
@@ -183,6 +192,7 @@ class RaftServer(object):
         self._votes[message['sender']] = message
         if (len(self._votes.keys()) > interface.get_endpoints() / 2):
           self._state = RaftState.LEADER
+          self._timer.stop()
           
           # Reset nodes indexes
           for ep in range(1, interface.get_endpoints()):
@@ -203,7 +213,12 @@ class RaftServer(object):
         
   def handle_append_entries(self, message, interface):
     """ Request to append an entry to the log. """
-    self._timeoutTime = self._nextTimeout()
+    self._timer.stop()
+    # start the timer
+    timeoutTime = self._nextTimeout()
+    self._timer = threading.Timer(timeoutTime, self.on_timeout(interface))
+    self._timer.start()
+    
     self._leader = message['sender']
     
     # check state and step down to Follower
