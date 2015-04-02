@@ -63,19 +63,20 @@ Prashant Chhabra
  - [Note: Clients will run in parallel on each client node]   
 
 ## Structure of the code
-1. **Framework** (code available in 'interface' folder) 
-2. **Consensus Protocols** (code available in 'consensusProtocols' folder) 
-Implementation of various consensus protocols. We have implemented 2PC and Raft.
- 2.1 Two Phase Commit
-Replicas communicate with each other via the ToyFramework communication protocol. There are 7 types of messages that can be sent between replicas : VOTE-REQ, VOTE-YES, VOTE-NO, COMMIT, ROLLBACK, ACKNOWLEDGEMENT and DECISION-REQ. The transaction logs are saved in stable storage using ToyFramework for failure recovery. When a server starts, it calls the method start(), which looks at the logs to determine if it needs to deal with failure recovery. Client can request get_value() and set_value() methods. The set_value() methods initiates a Two-Phase Commit Transaction.
- 2.2 Raft
+1. **Framework** (code available in 'interface' folder)    
+![ToyFramework Diagram](https://drive.google.com/uc?id=0B8fAcTjfL47FMmZxNGdOMWlWS00)
+2. **Consensus Protocols** (code available in 'consensusProtocols' folder)     
+Implementation of various consensus protocols. We have implemented 2PC and Raft.    
+ 2.1 **Two Phase Commit**   
+Replicas communicate with each other via the ToyFramework communication protocol. There are 7 types of messages that can be sent between replicas : VOTE-REQ, VOTE-YES, VOTE-NO, COMMIT, ROLLBACK, ACKNOWLEDGEMENT and DECISION-REQ. The transaction logs are saved in stable storage using ToyFramework for failure recovery. When a server starts, it calls the method start(), which looks at the logs to determine if it needs to deal with failure recovery. Client can request get_value() and set_value() methods. The set_value() methods initiates a Two-Phase Commit Transaction.    
+ 2.2 **Raft**      
 RaftServer class implements the Raft protocol. The server store the state of the replica in _state, which can be any one of Follower, Candidate and Leader. A server is initiated with Follower state. Once a leader is elected, the leader regularly sends AppendEntries message to all replicas. 
-3. **Distributed Key-value Store** : (code available in 'dictionary' folder) 
+3. **Distributed Key-value Store** : (code available in 'dictionary' folder)    
 There are two implementations of distributed key-value store. One uses static functions (dictionary.py) and the other uses non-static functions (datastore.py). Both the implemenations save data on stable storage. 
-The implementation in datastore.py provides transaction support (commit/abort). Any update is first saved in the RAM and  stored in stable storage on commit() operation.
-4. **Testing on Emulab** : (code available in 'evaluation' folder)
+The implementation in datastore.py provides transaction support (commit/abort). Any update is first saved in the RAM and  stored in stable storage on commit() operation.   
+4. **Testing on Emulab** : (code available in 'evaluation' folder)   
 We have provided sample scripts to perform testing on Emulab. 2PC-using-spyne also contains ready-made scripts to perform test on Emulab.
-5. **Two-Phase Commit implementation using RPC** (code available in '2PC-using-spyne' folder)    
+5. **Two-Phase Commit implementation using RPC** (code available in '2PC-using-spyne' folder)       
 A server Replica consists of Transaction Manager. Transaction Manager connects to Resource Manager (key-value datastore). A server communicates to its replicas using RPC calls over HTTP (transport protocol) with SOAP (information exchange protocol). A client can connected to any of the server using the server address (hostname or public ip address) and the port number.
  1. Two-Phase Commit Implementation: Transaction Manager (TM) is responsible for handling 2PC commit protocol. TM is exposed to client and its replicas using Replica class RPC methods. Each put() or delete() request from the client is treated as atomic transaction. TM also maintains 3 logs - Undo log, Redo log and TM log. Each log entry contains the transaction id. Whenever Server is restarted, it checks the logs to see if there is any unfinished transaction and rollbacks to last consistent state. All logs are saved in files in non-volatile memory (e.g. hard-disk).
  2. RPC communication between Replicas: We used Spyne package to implement RPC communication between the replicas. SOAP protocol is used as information exchange protocol. To communicate with a replica, server act as a client and vice-versa. Most of the RPC calls are synchronous (i.e. client waits for a certain amount of time for the results).
