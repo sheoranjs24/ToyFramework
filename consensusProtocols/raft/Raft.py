@@ -9,17 +9,17 @@ class RaftMessage:
    VoteResponse = "VoteResponse"
    Response = "Response"
 
-class ReplicaState:
-  Follower = "Follower"
-  Candidate = "Candidate"
-  Leader = "Leader"
+class RaftState:
+  FOLLOWER = "Follower"
+  CANDIDATE = "Candidate"
+  LEADER = "Leader"
 
 class RaftServer(object):
 
   def __init__(self, name=1, db='database.db', timeout=500):
     self._name = name
     self._server = None
-    self._state = ReplicaState.Follower
+    self._state = RaftState.FOLLOWER
     self._datastore = Database(db)
     
     self._commitIndex = 0
@@ -46,7 +46,8 @@ class RaftServer(object):
     """ Start service """
     print 'endpoints:', interface.get_endpoints()
     self._server = (interface.listen_host, interface.listen_port)
-    self._start_election() 
+    self._state = RaftState.CANDIDATE
+    self._start_election(interface) 
 
   def _nextTimeout(self):
     self._currentTime = time.time()
@@ -59,7 +60,7 @@ class RaftServer(object):
   
   def setValue(self, key, value, interface):
     ''' Set a value for a key in the database: request by client '''
-    if self._state == ReplicaState.Leader:
+    if self._state == RaftState.LEADER:
       # add to log
       self._datastore.set_value(key, value)
       
@@ -68,7 +69,15 @@ class RaftServer(object):
       # tell commitIndex to all nodes to update
        
   def on_timeout(self, message):
-    """ Leader timeout is reached. """
+    """ Timeout is reached. """
+    # Check the state of the server
+    if self._state == RaftState.FOLLOWER:
+      # Upgrade to Candidate and start election
+      self._state = RaftState.CANDIDATE
+      self._start_election(interface) 
+    elif self._state == RaftState.CANDIDATE:
+      # Restart the election
+      self._start_election(interface)
   
   def _start_election(self, interface):
     """ Start election for Leader. """
@@ -89,7 +98,19 @@ class RaftServer(object):
         
   def handle_vote_request(self, message):
     """ Vote request."""
-    if (self._last_vote is None and \
+    leader = None
+    # Check the state of the server
+    if self._state == RaftState.LEADER:
+      if message['data']['lastLogIndex'] <= self._lastLogIndex:
+        # leader is already elected
+        voteResponse = False
+        leader = self._server   
+      else:
+        # step down
+        self._state = RaftState.FOLLOWER
+        self._last_vote = message['sender']
+        voteResponse = True
+    elif (self._last_vote is None and \
       message['data']['lastLogIndex'] >= self._lastLogIndex):
       self._last_vote = message['sender']
       voteResponse = True
@@ -98,20 +119,22 @@ class RaftServer(object):
       
     # Send Message
     response = {'timestamp': int(time.time()),
-                'sender': self.server,
+                'sender': self._server,
                 'receiver': message['sender'],
                 'type': RaftMessage.VoteResponse,
                 'term': message['term'],
-                'response': voteResponse
+                'response': voteResponse,
+                'leader': leader
                 }
     self.send_message_to_one(response, interface)
     
   def handle_vote_response(self, message, interface):
     """ Node received a vote."""
-    if message['sender'] not in self._votes:
+    if message['sender'] not in self._votes and \
+      message['response'] == True:
       self._votes[message['sender']] = message
       if (len(self._votes.keys()) > interface.get_endpoints() / 2):
-        self._state = ReplicaState.Leader
+        self._state = RaftState.LEADER
         
         # Reset nodes indexes
         for ep in range(1, interface.get_endpoints()):
@@ -121,6 +144,13 @@ class RaftServer(object):
         
         # Start heart-beat
         self._send_heart_beat(interface)
+    elif message['sender'] not in self._votes and \
+      message['response'] == False:
+      # Check if there is already a leader
+      print('Vote No: leader', message['leader'])
+      if message['leader'] is not None:
+        # step down to Follower
+        self._state = RaftState.FOLLOWER
         
   def handle_append_entries(self, message, interface):
     """ Request to append an entry to the log. """
@@ -241,7 +271,7 @@ class RaftServer(object):
 
   def send_message_response(self, message, interface, yes=True):
     response = {'timestamp': int(time.time()),
-                'sender': self.server,
+                'sender': self._server,
                 'receiver': message['sender'], 
                 'type': RaftMessage.Response,
                 'term': msg['term'], 
