@@ -86,10 +86,17 @@ A server Replica consists of Transaction Manager. Transaction Manager connects t
 
 ## Handling Failures
 - Clients waits for a certain timeout time, before throwing exception that they are unable to get response or connect to the server.
-- TM maintains logs for each transaction which can be used for recovery.
+- ToyFramework implements timeout method to inform the replica is a connection is lost. It also provides supports for logging events in stable storage for recovery.
+- Consensus Protocols use ToyFramework logging interface to write logs to a stable storage. Whenever a replica restarts, it calls the start() method and read the log. If there is any conflict, the replica takes steps accordingly.
+ - **2PC** writes transaction logs into stable storage before performing any update on the data and also before sending messages to the participants/coordinator. The protocol records following types of events in the log: 2PC-Start, 2PC-Finish, 2PC-Commit, 2PC-Rollback, Vote-Yes, Vote-No, Update and Abort. When a replica restarts, it reads the latest entry from the log and perform action based on the type of event last logged. The recovery mehtod is pretty much a standard 2PC recovery using logs.
+ - **Raft** also writes logs into stable storage. However, it only writes update event log messages. When a replica restarts, its state is Follower and it waits for an AppendEntry message from the leader until timeout_time. 
+  - If no message is received from the leader, it changes its state to the Candidate and initate election for the leader.
+  - If it receives an AppendEntry message from the leader, then it checks if the leader's commitIndex matches its own commitIndex (read from logs). If not, then it asks the leader to send all log entries after its own commitIndex. On receiving the entries, it updates the database and write logs accordingly.
+
 
 ## Test-cases
 - Sanity check: Have a client connect to a server and give some queries.
+- Correctness of the consensus protocols.
 - Two clients connected to same server.
 - Multiple clients connected multiple servers. 
 - Performance Test.
@@ -97,7 +104,8 @@ A server Replica consists of Transaction Manager. Transaction Manager connects t
 ## Future Scope
 - As the logs are maintained, new replicas can be added any time and can be made up-to-date using the logs. In future, we would like to explore this scenario.
 - Consider 2PC optimizations.
-- Authentication and security
+- Authentication and security.
+- Testing system recovery from random node failures multiple times. 
 
 ## Running the framework alone
 - Go to Interface/ folder, start a framework instance:
