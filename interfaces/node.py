@@ -2,6 +2,7 @@ from twisted.internet import reactor
 
 from util import Framework
 from consensusProtocols.TPC.TwoPhaseCommit import TwoPhaseCommit
+from consensusProtocols.raft.Raft import RaftServer
 
 import optparse
 
